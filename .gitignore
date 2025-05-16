@@ -74,3 +74,4 @@ documentacao/XML_Mensagens/Mensagens XML/5. Consulta de NFS-e/Resposta/instancia
 documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Envio/instancia_servico_cancelar_nfse_envio.xml
 documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Resposta/servico_cancelar_nfse_resposta_a.xml
 documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Resposta/servico_cancelar_nfse_resposta_b.xml
+certs/*
