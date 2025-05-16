@@ -256,9 +256,9 @@ npm test
 ```
 
 
-https://www.pacbel.com.br
+https://www.pacbel.com.br  
 
-**Carlos Pacheco**
-carlos.pacheco@pacbel.com.br
+**Carlos Pacheco**  
+carlos.pacheco@pacbel.com.br  
 (31)3191-9870 (WhatsApp)
 
