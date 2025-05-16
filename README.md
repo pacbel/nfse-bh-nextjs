@@ -1,3 +1,4 @@
+
 # Manual Técnico - Sistema de Emissão de NFS-e BH
 
 ## 1. Visão Geral
@@ -256,6 +257,8 @@ npm test
 
 
 https://www.pacbel.com.br
-Carlos Pacheco
+
+**Carlos Pacheco**
 carlos.pacheco@pacbel.com.br
 (31)3191-9870 (WhatsApp)
+
