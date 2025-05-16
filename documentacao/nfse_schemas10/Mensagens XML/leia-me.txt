@@ -1,0 +1,1 @@
+Não há validade no arquivo de dados nessas mensagens devido ao fato de que foram formatados a título de fornecer uma melhor visualização, logo a assinatura do documento de dados XML perdeu o valor.

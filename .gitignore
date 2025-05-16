@@ -1,0 +1,76 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+logs/*
+
+# testing
+/coverage
+
+/public/nfse_html
+/public/*.pdf
+/public/*.sql
+/public/*.txt
+
+/data/temp/*
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env.local
+
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+.vs/*
+dump.rdb
+dump.rdb
+node_stdout.log
+node_stderr.log
+# logs e notas fiscais
+/logs/
+/notas-fiscais/
+documentacao/XML_Mensagens.zip
+documentacao/XML_Mensagens/Mensagens XML/leia-me.txt
+documentacao/XML_Mensagens/Mensagens XML/1. Recepção e Processamento de Lote de RPS/Envio/instancia_servico_enviar_lote_rps_envio.xml
+documentacao/XML_Mensagens/Mensagens XML/1. Recepção e Processamento de Lote de RPS/Resposta/Instancia_servico_enviar_lote_rps_resposta_a.xml
+documentacao/XML_Mensagens/Mensagens XML/1. Recepção e Processamento de Lote de RPS/Resposta/Instancia_servico_enviar_lote_rps_resposta_b.xml
+documentacao/XML_Mensagens/Mensagens XML/2. Consulta de Situação de Lote de RPS/Envio/instancia_servico_consultar_situacao_lote_rps_envio.xml
+documentacao/XML_Mensagens/Mensagens XML/2. Consulta de Situação de Lote de RPS/Resposta/instancia_servico_consultar_situacao_lote_rps_resposta.xml
+documentacao/XML_Mensagens/Mensagens XML/3. Consulta de NFS-e por RPS/Envio/instancia_servico_consultar_nfse_envio.xml
+documentacao/XML_Mensagens/Mensagens XML/3. Consulta de NFS-e por RPS/Resposta/instancia_servico_consultar_nfse_rps_resposta.xml
+documentacao/XML_Mensagens/Mensagens XML/4. Consulta de Lote de RPS/Envio/instancia_servico_consultar_lote_rps_envio.xml
+documentacao/XML_Mensagens/Mensagens XML/4. Consulta de Lote de RPS/Resposta/instancia_servico_consultar_lote_rps_resposta_a.xml
+documentacao/XML_Mensagens/Mensagens XML/4. Consulta de Lote de RPS/Resposta/instancia_servico_consultar_lote_rps_resposta_b.xml
+documentacao/XML_Mensagens/Mensagens XML/5. Consulta de NFS-e/Envio/instancia_consultar_nfse_envio_a.xml
+documentacao/XML_Mensagens/Mensagens XML/5. Consulta de NFS-e/Envio/instancia_consultar_nfse_envio_b.xml
+documentacao/XML_Mensagens/Mensagens XML/5. Consulta de NFS-e/Resposta/instancia_consultar_nfse_resposta.xml
+documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Envio/instancia_servico_cancelar_nfse_envio.xml
+documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Resposta/servico_cancelar_nfse_resposta_a.xml
+documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Resposta/servico_cancelar_nfse_resposta_b.xml

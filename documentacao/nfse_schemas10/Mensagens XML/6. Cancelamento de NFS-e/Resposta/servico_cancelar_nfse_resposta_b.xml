@@ -1,0 +1,9 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<CancelarNfseResposta xmlns="http://www.abrasf.org.br/nfse.xsd">
+	<ListaMensagemRetorno>
+		<MensagemRetorno>
+			<Codigo>E174</Codigo>
+			<Mensagem>Arquivo enviado com erro na assinatura.</Mensagem>
+		</MensagemRetorno>
+	</ListaMensagemRetorno>
+</CancelarNfseResposta>
