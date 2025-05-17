@@ -4,7 +4,7 @@ import axios from "axios";
 import https from "https";
 import { buildNfseXml } from "../../utils/xmlBuilder";
 import { writeLog } from "./logs";
-import { nfseDataTemplate } from "../../utils/nfseDataTemplate";
+// Removida importação de jsonLoader - os dados devem vir diretamente do POST
 import { assinarXmlNfsePbh } from "../../utils/assinador";
 import { findCertificatePath } from "../../utils/certificateUtils";
 import { createSoapEnvelope } from "../../utils/soapBuilder";
@@ -36,15 +36,35 @@ export default async function handler(req, res) {
   };
 
 
+  // Verificar se os dados necessários foram enviados
+  if (!req.body || !req.body.LoteRps) {
+    return res.status(400).json({
+      success: false,
+      message: 'Dados inválidos',
+      error: 'O corpo da requisição deve conter os dados do LoteRps'
+    });
+  }
+
+  // Identificar o CNPJ para selecionar o certificado correto
+  const cnpj = req.body.LoteRps.Cnpj || req.query.cnpj;
+  if (!cnpj) {
+    return res.status(400).json({
+      success: false,
+      message: 'CNPJ não informado',
+      error: 'É necessário informar o CNPJ no corpo da requisição ou como parâmetro de consulta'
+    });
+  }
+  addLog(`CNPJ identificado: ${cnpj}`);
+
   // 2. Gerar XML da NFS-e
   addLog("Gerando XML da NFS-e...");
-  const xml = buildNfseXml(nfseDataTemplate);
+  const xml = buildNfseXml(req.body);
   addLog('[DEBUG] XML gerado:');
   if (!xml || xml.trim().length === 0) {
     addLog('[ERRO] XML gerado está vazio!');
   }
   const timestamp = new Date().toISOString().replace(/:/g, '-');
-  const saveXML01 = path.join(originalDir, `nfse_${req.body.NumeroLote || "1"}_${timestamp}.xml`);
+  const saveXML01 = path.join(originalDir, `nfse_${req.body.LoteRps.NumeroLote || "1"}_${timestamp}.xml`);
   await fs.promises.writeFile(saveXML01, xml, 'utf8');
   addLog("   ✓ XML gerado com sucesso");
 
@@ -72,10 +92,8 @@ export default async function handler(req, res) {
   // Assinar o XML
   addLog("Assinando XML...");
   
-  // Obter o CNPJ do emitente a partir dos dados da requisição ou da variável de ambiente
-  const cnpj = req.body.LoteRps?.CpfCnpj?.Cnpj || 
-               process.env.CERT_CNPJ || 
-               "05065736000161";
+  // Usar o CNPJ já identificado anteriormente
+  // O CNPJ já foi validado e está disponível na variável 'cnpj'
   
   let certificadoPath;
   try {

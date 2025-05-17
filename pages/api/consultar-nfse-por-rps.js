@@ -4,7 +4,7 @@ import axios from "axios";
 import https from "https";
 import { buildConsultarNfseRpsXml } from "../../utils/xmlBuilderMetodo3";
 import { writeLog } from "./logs";
-import { nfseDataTemplateMetodo3 } from "../../utils/nfseDataTemplateMetodo3";
+// Removida importação de jsonLoader - os dados devem vir diretamente do POST
 import { createSoapEnvelopeMetodo3 } from "../../utils/soapBuilderMetodos";
 import { validateXsdGlobal } from "../../utils/validateXsdGlobal";
 import { findCertificatePath } from "../../utils/certificateUtils";
@@ -34,15 +34,29 @@ export default async function handler(req, res) {
     logs.push(message);
   };
 
-  // Preparar os dados para a consulta
-  const consultaData = {
-    ...nfseDataTemplateMetodo3,
-    ...req.body
-  };
+  // Verificar se os dados necessários foram enviados
+  if (!req.body || !req.body.Prestador || !req.body.IdentificacaoRps) {
+    return res.status(400).json({
+      success: false,
+      message: 'Dados inválidos',
+      error: 'O corpo da requisição deve conter os dados do Prestador e IdentificacaoRps'
+    });
+  }
+
+  // Identificar o CNPJ para selecionar o certificado correto
+  const cnpj = req.body.Prestador.Cnpj || req.query.cnpj;
+  if (!cnpj) {
+    return res.status(400).json({
+      success: false,
+      message: 'CNPJ não informado',
+      error: 'É necessário informar o CNPJ no corpo da requisição ou como parâmetro de consulta'
+    });
+  }
+  addLog(`CNPJ identificado: ${cnpj}`);
 
   // 2. Gerar XML da consulta
   addLog("Gerando XML da consulta de NFS-e por RPS...");
-  const xml = buildConsultarNfseRpsXml(consultaData);
+  const xml = buildConsultarNfseRpsXml(req.body);
   addLog('[DEBUG] XML gerado:');
   if (!xml || xml.trim().length === 0) {
     addLog('[ERRO] XML gerado está vazio!');
@@ -88,10 +102,8 @@ export default async function handler(req, res) {
   
   // Configuração do agente HTTPS
   
-  // Obter o CNPJ do emitente a partir dos dados da requisição ou da variável de ambiente
-  const cnpj = consultaData.IdentificacaoRps?.CpfCnpj?.Cnpj || 
-               process.env.CERT_CNPJ || 
-               "05065736000161";
+  // O CNPJ já foi identificado anteriormente
+  // Não precisamos declarar novamente
   
   let certificadoPath;
   try {

@@ -4,7 +4,7 @@ import axios from "axios";
 import https from "https";
 import { buildConsultarSituacaoLoteRpsXml } from "../../utils/xmlBuilderMetodo2";
 import { writeLog } from "./logs";
-import { nfseDataTemplateMetodo2 } from "../../utils/nfseDataTemplateMetodo2";
+// Removida importação de jsonLoader - os dados devem vir diretamente do POST
 import { createSoapEnvelopeMetodo2 } from "../../utils/soapBuilderMetodos";
 import { validateXsdGlobal } from "../../utils/validateXsdGlobal";
 import { findCertificatePath } from "../../utils/certificateUtils";
@@ -34,21 +34,35 @@ export default async function handler(req, res) {
     logs.push(message);
   };
 
-  // Preparar os dados para a consulta
-  const consultaData = {
-    ...nfseDataTemplateMetodo2,
-    ...req.body
-  };
+  // Verificar se os dados necessários foram enviados
+  if (!req.body || !req.body.Prestador) {
+    return res.status(400).json({
+      success: false,
+      message: 'Dados inválidos',
+      error: 'O corpo da requisição deve conter os dados do Prestador'
+    });
+  }
+
+  // Identificar o CNPJ para selecionar o certificado correto
+  const cnpj = req.body.Prestador.Cnpj || req.query.cnpj;
+  if (!cnpj) {
+    return res.status(400).json({
+      success: false,
+      message: 'CNPJ não informado',
+      error: 'É necessário informar o CNPJ no corpo da requisição ou como parâmetro de consulta'
+    });
+  }
+  addLog(`CNPJ identificado: ${cnpj}`);
 
   // 2. Gerar XML da consulta
   addLog("Gerando XML da consulta de situação de lote RPS...");
-  const xml = buildConsultarSituacaoLoteRpsXml(consultaData);
+  const xml = buildConsultarSituacaoLoteRpsXml(req.body);
   addLog('[DEBUG] XML gerado:');
   if (!xml || xml.trim().length === 0) {
     addLog('[ERRO] XML gerado está vazio!');
   }
   const timestamp = new Date().toISOString().replace(/:/g, '-');
-  const saveXML = path.join(consultasDir, `consulta_situacao_lote_${consultaData.Protocolo || "protocolo"}_${timestamp}.xml`);
+  const saveXML = path.join(consultasDir, `consulta_situacao_lote_${req.body.Protocolo || "protocolo"}_${timestamp}.xml`);
   await fs.promises.writeFile(saveXML, xml, 'utf8');
   addLog("   ✓ XML gerado com sucesso");
 
@@ -88,10 +102,8 @@ export default async function handler(req, res) {
   
   // Configuração do agente HTTPS
   
-  // Obter o CNPJ do emitente a partir dos dados da requisição ou da variável de ambiente
-  const cnpj = consultaData.Prestador?.Cnpj || 
-               process.env.CERT_CNPJ || 
-               "05065736000161";
+  // O CNPJ já foi identificado anteriormente
+  // Não precisamos declarar novamente
   
   let certificadoPath;
   try {

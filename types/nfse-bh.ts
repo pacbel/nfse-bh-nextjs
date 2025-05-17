@@ -150,7 +150,7 @@ export interface CancelamentoNfse {
 
 // Interface para a API Gateway
 export interface NfseApiRequest {
-  nfseData: any; // Dados do template nfseDataTemplate
+  nfseData: any; // Dados do JSON para geração do XML
   emitente: {
     identificacao: string; // CNPJ ou CPF
     tipo: 'CPF' | 'CNPJ';

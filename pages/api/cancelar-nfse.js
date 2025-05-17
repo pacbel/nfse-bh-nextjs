@@ -4,7 +4,7 @@ import axios from "axios";
 import https from "https";
 import { buildCancelarNfseXml } from "../../utils/xmlBuilderMetodo6";
 import { writeLog } from "./logs";
-import { nfseDataTemplateMetodo6 } from "../../utils/nfseDataTemplateMetodo6";
+// Removida importação de jsonLoader - os dados devem vir diretamente do POST
 import { createSoapEnvelopeMetodo6 } from "../../utils/soapBuilderMetodos";
 import { assinarXmlNfsePbh } from "../../utils/assinador";
 import { validateXsdGlobal } from "../../utils/validateXsdGlobal";
@@ -35,15 +35,29 @@ export default async function handler(req, res) {
     logs.push(message);
   };
 
-  // Preparar os dados para o cancelamento
-  const cancelamentoData = {
-    ...nfseDataTemplateMetodo6,
-    ...req.body
-  };
+  // Verificar se os dados necessários foram enviados
+  if (!req.body || !req.body.Pedido || !req.body.Pedido.InfPedidoCancelamento || !req.body.Pedido.InfPedidoCancelamento.IdentificacaoNfse) {
+    return res.status(400).json({
+      success: false,
+      message: 'Dados inválidos',
+      error: 'O corpo da requisição deve conter os dados do Pedido de Cancelamento'
+    });
+  }
+
+  // Identificar o CNPJ para selecionar o certificado correto
+  const cnpj = req.body.Pedido.InfPedidoCancelamento.IdentificacaoNfse.Cnpj || req.query.cnpj;
+  if (!cnpj) {
+    return res.status(400).json({
+      success: false,
+      message: 'CNPJ não informado',
+      error: 'É necessário informar o CNPJ no corpo da requisição ou como parâmetro de consulta'
+    });
+  }
+  addLog(`CNPJ identificado: ${cnpj}`);
 
   // 2. Gerar XML do cancelamento
   addLog("Gerando XML do cancelamento de NFS-e...");
-  const xml = buildCancelarNfseXml(cancelamentoData);
+  const xml = buildCancelarNfseXml(req.body);
   addLog('[DEBUG] XML gerado:');
   if (!xml || xml.trim().length === 0) {
     addLog('[ERRO] XML gerado está vazio!');
@@ -78,10 +92,8 @@ export default async function handler(req, res) {
   // Assinar o XML
   addLog("Assinando XML...");
   
-  // Obter o CNPJ do emitente a partir dos dados da requisição ou da variável de ambiente
-  const cnpj = cancelamentoData.Pedido?.InfPedidoCancelamento?.IdentificacaoNfse?.CpfCnpj?.Cnpj || 
-               process.env.CERT_CNPJ || 
-               "05065736000161";
+  // O CNPJ já foi identificado anteriormente
+  // Não precisamos declarar novamente
   
   let certificadoPath;
   try {

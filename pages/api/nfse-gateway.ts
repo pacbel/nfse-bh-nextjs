@@ -8,7 +8,7 @@ import axios from "axios";
 import https from "https";
 import { buildNfseXml } from '../../utils/xmlBuilder';
 import { writeLog } from "./logs";
-import { nfseDataTemplate } from "../../utils/nfseDataTemplate";
+import { loadJsonTemplate } from "../../utils/jsonLoader";
 import { createSoapEnvelope } from '../../utils/soapBuilder';
 import { validateXsdGlobal } from '../../utils/validateXsdGlobal';
 import { findCertificatePath } from "../../utils/certificateUtils";
