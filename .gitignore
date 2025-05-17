@@ -39,7 +39,7 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env.local
+# .env.local
 
 
 # vercel
@@ -74,3 +74,5 @@ documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Envio/instanci
 documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Resposta/servico_cancelar_nfse_resposta_a.xml
 documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Resposta/servico_cancelar_nfse_resposta_b.xml
 certs/*
+
+documentacao/jsons_pacbel/*

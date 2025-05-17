@@ -8,14 +8,41 @@ import fs from 'fs';
 export function assinarXmlNfsePbh(xml: string, pfxPath: string, senha: string): string {
   try {
     console.log('1. Iniciando processo de assinatura');
+    console.log(`Caminho do certificado: ${pfxPath}`);
+    console.log(`Senha configurada: ${senha ? 'Sim' : 'Não'}`);
+    
+    if (!fs.existsSync(pfxPath)) {
+      throw new Error(`Arquivo de certificado não encontrado: ${pfxPath}`);
+    }
     
     // Extrair o certificado e a chave privada
     const pfxBuffer = fs.readFileSync(pfxPath);
-    const p12Asn1 = forge.asn1.fromDer(forge.util.createBuffer(pfxBuffer.toString('binary')));
-    const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, false, senha);
-
-    const keyObj = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag][0];
-    const certObj = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag][0];
+    console.log(`Tamanho do buffer do certificado: ${pfxBuffer.length} bytes`);
+    
+    let p12Asn1;
+    try {
+      p12Asn1 = forge.asn1.fromDer(forge.util.createBuffer(pfxBuffer.toString('binary')));
+      console.log('ASN1 decodificado com sucesso');
+    } catch (err) {
+      console.error('Erro ao decodificar ASN1:', err);
+      throw new Error(`Erro ao decodificar o certificado: ${err.message}`);
+    }
+    
+    let p12, keyObj, certObj;
+    try {
+      p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, false, senha);
+      console.log('PKCS12 decodificado com sucesso');
+      
+      keyObj = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag][0];
+      certObj = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag][0];
+      
+      if (!keyObj || !certObj) {
+        throw new Error('Não foi possível extrair a chave privada ou o certificado');
+      }
+    } catch (err) {
+      console.error('Erro ao processar PKCS12:', err);
+      throw new Error(`Senha do certificado inválida ou certificado corrompido: ${err.message}`);
+    }
 
     const privateKey = keyObj.key;
     const certificate = forge.pki.certificateToPem(certObj.cert)

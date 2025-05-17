@@ -9,47 +9,76 @@ const EmitirNfse = () => {
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     ambiente: 2, // 1=Produção, 2=Homologação
-    Prestador: {
-      CpfCnpj: {
-        Cnpj: ''
-      },
-      InscricaoMunicipal: '',
-      RazaoSocial: ''
-    },
-    Tomador: {
-      CpfCnpj: {
-        Cnpj: ''
-      },
-      RazaoSocial: '',
-      Endereco: {
-        Endereco: '',
-        Numero: '',
-        Complemento: '',
-        Bairro: '',
-        CodigoMunicipio: '3106200', // Belo Horizonte
-        Uf: 'MG',
-        Cep: ''
-      },
-      Contato: {
-        Email: ''
+    LoteRps: {
+      Id: 'lote',
+      versao: '1.00',
+      NumeroLote: '1',
+      Cnpj: '05065736000161',
+      InscricaoMunicipal: '01733890014',
+      QuantidadeRps: 1,
+      ListaRps: {
+        Rps: {
+          InfRps: {
+            IdentificacaoRps: {
+              Numero: '15',
+              Serie: 'HOMOL',
+              Tipo: '1'
+            },
+            DataEmissao: new Date().toISOString().split('.')[0],
+            NaturezaOperacao: '1',
+            OptanteSimplesNacional: '2',
+            IncentivadorCultural: '2',
+            Status: '1',
+            Servico: {
+              Valores: {
+                ValorServicos: '2800.80',
+                BaseCalculo: '2800.80',
+                ValorDeducoes: '0',
+                ValorPis: '0',
+                ValorCofins: '0',
+                ValorInss: '0',
+                ValorIr: '0',
+                ValorCsll: '0',
+                IssRetido: '2', // 1=Sim, 2=Não
+                OutrasRetencoes: '0',
+                Aliquota: '2.5',
+                DescontoIncondicionado: '0',
+                DescontoCondicionado: '0'
+              },
+              ItemListaServico: '1.03',
+              CodigoTributacaoMunicipio: '10300188',
+              Discriminacao: 'LICENCIAMENTO OU CESSÃO DE DIREITOS DE USO DE PROGRAMAS DE COMPUTADOR',
+              CodigoMunicipio: '3106200' // Belo Horizonte
+            },
+            Prestador: {
+              Cnpj: '05065736000161',
+              InscricaoMunicipal: '01733890014'
+            },
+            Tomador: {
+              IdentificacaoTomador: {
+                CpfCnpj: {
+                  Cnpj: '12345678000199'
+                }
+              },
+              RazaoSocial: 'Cliente Teste LTDA',
+              Endereco: {
+                Endereco: 'Rua Teste',
+                Numero: '123',
+                Complemento: 'Apto 101',
+                Bairro: 'Bairro Teste',
+                CodigoMunicipio: '3106200', // Belo Horizonte
+                Uf: 'MG',
+                Cep: ''
+              },
+              Contato: {
+                Email: 'cliente@teste.com',
+                Telefone: ''
+              }
+            }
+          }
+        }
       }
-    },
-    Servico: {
-      Valores: {
-        ValorServicos: '',
-        IssRetido: '2', // 1=Sim, 2=Não
-        ValorIss: '',
-        BaseCalculo: '',
-        Aliquota: ''
-      },
-      ItemListaServico: '',
-      CodigoTributacaoMunicipio: '',
-      Discriminacao: '',
-      CodigoMunicipio: '3106200' // Belo Horizonte
-    },
-    Serie: 'NFE',
-    Tipo: '1',
-    DataEmissao: new Date().toISOString().split('T')[0]
+    }
   });
 
   const handleChange = (e) => {
@@ -63,135 +92,310 @@ const EmitirNfse = () => {
     } else if (name === 'Cnpj_Prestador') {
       setFormData({
         ...formData,
-        Prestador: {
-          ...formData.Prestador,
-          CpfCnpj: {
-            Cnpj: value
+        LoteRps: {
+          ...formData.LoteRps,
+          Cnpj: value,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Prestador: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Prestador,
+                  Cnpj: value
+                }
+              }
+            }
           }
         }
       });
     } else if (name === 'InscricaoMunicipal') {
       setFormData({
         ...formData,
-        Prestador: {
-          ...formData.Prestador,
-          InscricaoMunicipal: value
+        LoteRps: {
+          ...formData.LoteRps,
+          InscricaoMunicipal: value,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Prestador: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Prestador,
+                  InscricaoMunicipal: value
+                }
+              }
+            }
+          }
         }
       });
-    } else if (name === 'RazaoSocial_Prestador') {
-      setFormData({
-        ...formData,
-        Prestador: {
-          ...formData.Prestador,
-          RazaoSocial: value
-        }
-      });
+    /* Função que tratava o campo de razão social do prestador removida pois não é utilizada na API */
     } else if (name === 'Cnpj_Tomador') {
       setFormData({
         ...formData,
-        Tomador: {
-          ...formData.Tomador,
-          CpfCnpj: {
-            Cnpj: value
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Tomador: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Tomador,
+                  IdentificacaoTomador: {
+                    ...formData.LoteRps.ListaRps.Rps.InfRps.Tomador.IdentificacaoTomador,
+                    CpfCnpj: {
+                      ...formData.LoteRps.ListaRps.Rps.InfRps.Tomador.IdentificacaoTomador.CpfCnpj,
+                      Cnpj: value
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       });
     } else if (name === 'RazaoSocial_Tomador') {
       setFormData({
         ...formData,
-        Tomador: {
-          ...formData.Tomador,
-          RazaoSocial: value
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Tomador: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Tomador,
+                  RazaoSocial: value
+                }
+              }
+            }
+          }
         }
       });
     } else if (name === 'Email_Tomador') {
       setFormData({
         ...formData,
-        Tomador: {
-          ...formData.Tomador,
-          Contato: {
-            ...formData.Tomador.Contato,
-            Email: value
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Tomador: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Tomador,
+                  Contato: {
+                    ...formData.LoteRps.ListaRps.Rps.InfRps.Tomador.Contato,
+                    Email: value
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    } else if (name === 'Telefone_Tomador') {
+      setFormData({
+        ...formData,
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Tomador: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Tomador,
+                  Contato: {
+                    ...formData.LoteRps.ListaRps.Rps.InfRps.Tomador.Contato,
+                    Telefone: value
+                  }
+                }
+              }
+            }
           }
         }
       });
     } else if (name === 'ValorServicos') {
       setFormData({
         ...formData,
-        Servico: {
-          ...formData.Servico,
-          Valores: {
-            ...formData.Servico.Valores,
-            ValorServicos: value,
-            BaseCalculo: value // Por padrão, a base de cálculo é igual ao valor do serviço
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Servico: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Servico,
+                  Valores: {
+                    ...formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores,
+                    ValorServicos: value,
+                    BaseCalculo: value // Por padrão, a base de cálculo é igual ao valor do serviço
+                  }
+                }
+              }
+            }
           }
         }
       });
     } else if (name === 'IssRetido') {
       setFormData({
         ...formData,
-        Servico: {
-          ...formData.Servico,
-          Valores: {
-            ...formData.Servico.Valores,
-            IssRetido: value
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Servico: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Servico,
+                  Valores: {
+                    ...formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores,
+                    IssRetido: value
+                  }
+                }
+              }
+            }
           }
         }
       });
     } else if (name === 'Aliquota') {
-      const aliquota = parseFloat(value);
-      const valorServicos = parseFloat(formData.Servico.Valores.ValorServicos) || 0;
-      const valorIss = (valorServicos * (aliquota / 100)).toFixed(2);
+      const aliquota = parseFloat(value) / 100; // Converte para decimal (ex: 2.5% -> 0.025)
+      const valorServicos = parseFloat(formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.ValorServicos) || 0;
       
       setFormData({
         ...formData,
-        Servico: {
-          ...formData.Servico,
-          Valores: {
-            ...formData.Servico.Valores,
-            Aliquota: value,
-            ValorIss: valorIss
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Servico: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Servico,
+                  Valores: {
+                    ...formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores,
+                    Aliquota: aliquota.toString()
+                  }
+                }
+              }
+            }
           }
         }
       });
     } else if (name === 'ItemListaServico') {
       setFormData({
         ...formData,
-        Servico: {
-          ...formData.Servico,
-          ItemListaServico: value
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Servico: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Servico,
+                  ItemListaServico: value
+                }
+              }
+            }
+          }
         }
       });
     } else if (name === 'CodigoTributacaoMunicipio') {
       setFormData({
         ...formData,
-        Servico: {
-          ...formData.Servico,
-          CodigoTributacaoMunicipio: value
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Servico: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Servico,
+                  CodigoTributacaoMunicipio: value
+                }
+              }
+            }
+          }
         }
       });
     } else if (name === 'Discriminacao') {
       setFormData({
         ...formData,
-        Servico: {
-          ...formData.Servico,
-          Discriminacao: value
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                Servico: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.Servico,
+                  Discriminacao: value
+                }
+              }
+            }
+          }
+        }
+      });
+    } else if (name === 'Numero') {
+      setFormData({
+        ...formData,
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                IdentificacaoRps: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.IdentificacaoRps,
+                  Numero: value
+                }
+              }
+            }
+          }
         }
       });
     } else if (name === 'Serie') {
       setFormData({
         ...formData,
-        Serie: value
-      });
-    } else if (name === 'Tipo') {
-      setFormData({
-        ...formData,
-        Tipo: value
-      });
-    } else if (name === 'DataEmissao') {
-      setFormData({
-        ...formData,
-        DataEmissao: value
+        LoteRps: {
+          ...formData.LoteRps,
+          ListaRps: {
+            ...formData.LoteRps.ListaRps,
+            Rps: {
+              ...formData.LoteRps.ListaRps.Rps,
+              InfRps: {
+                ...formData.LoteRps.ListaRps.Rps.InfRps,
+                IdentificacaoRps: {
+                  ...formData.LoteRps.ListaRps.Rps.InfRps.IdentificacaoRps,
+                  Serie: value
+                }
+              }
+            }
+          }
+        }
       });
     }
   };
@@ -203,14 +407,10 @@ const EmitirNfse = () => {
     setResponse(null);
 
     try {
+      // Enviar o objeto LoteRps completo para a API
       const res = await axios.post('/api/emitir-nfse-direct', {
         ambiente: formData.ambiente,
-        Prestador: formData.Prestador,
-        Tomador: formData.Tomador,
-        Servico: formData.Servico,
-        Serie: formData.Serie,
-        Tipo: formData.Tipo,
-        DataEmissao: formData.DataEmissao
+        LoteRps: formData.LoteRps
       });
       setResponse(res.data);
     } catch (err) {
@@ -226,9 +426,9 @@ const EmitirNfse = () => {
         <title>Emitir NFSe - Sistema NFSe BH</title>
       </Head>
 
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
-          <div className="max-w-md mx-auto">
+      <div className="container mx-auto px-4">
+        <div className="bg-white shadow-lg rounded-lg p-6">
+          <div className="w-full">
             <div>
               <h1 className="text-2xl font-semibold text-center mb-6">Emitir NFSe</h1>
             </div>
@@ -274,7 +474,7 @@ const EmitirNfse = () => {
                       id="cnpjPrestador"
                       type="text"
                       name="Cnpj_Prestador"
-                      value={formData.Prestador.CpfCnpj.Cnpj}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Prestador.Cnpj}
                       onChange={handleChange}
                       placeholder="CNPJ (apenas números)"
                       required
@@ -290,28 +490,14 @@ const EmitirNfse = () => {
                       id="inscricaoMunicipal"
                       type="text"
                       name="InscricaoMunicipal"
-                      value={formData.Prestador.InscricaoMunicipal}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Prestador.InscricaoMunicipal}
                       onChange={handleChange}
                       placeholder="Inscrição Municipal"
                       required
                     />
                   </div>
 
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="razaoSocialPrestador">
-                      Razão Social do Prestador
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="razaoSocialPrestador"
-                      type="text"
-                      name="RazaoSocial_Prestador"
-                      value={formData.Prestador.RazaoSocial}
-                      onChange={handleChange}
-                      placeholder="Razão Social"
-                      required
-                    />
-                  </div>
+                  {/* Campo de Razão Social do Prestador removido pois não é utilizado na API */}
 
                   <h3 className="text-lg font-semibold mt-4 mb-2">Dados do Tomador</h3>
                   
@@ -324,7 +510,7 @@ const EmitirNfse = () => {
                       id="cnpjTomador"
                       type="text"
                       name="Cnpj_Tomador"
-                      value={formData.Tomador.CpfCnpj.Cnpj}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.IdentificacaoTomador.CpfCnpj.Cnpj}
                       onChange={handleChange}
                       placeholder="CNPJ (apenas números)"
                       required
@@ -340,7 +526,7 @@ const EmitirNfse = () => {
                       id="razaoSocialTomador"
                       type="text"
                       name="RazaoSocial_Tomador"
-                      value={formData.Tomador.RazaoSocial}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.RazaoSocial}
                       onChange={handleChange}
                       placeholder="Razão Social"
                       required
@@ -356,9 +542,43 @@ const EmitirNfse = () => {
                       id="emailTomador"
                       type="email"
                       name="Email_Tomador"
-                      value={formData.Tomador.Contato.Email}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.Contato.Email}
                       onChange={handleChange}
                       placeholder="Email"
+                      required
+                    />
+                  </div>
+
+                  <h3 className="text-lg font-semibold mt-4 mb-2">Dados do RPS</h3>
+                  
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numeroRps">
+                      Número do RPS
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="numeroRps"
+                      type="text"
+                      name="Numero"
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.IdentificacaoRps.Numero}
+                      onChange={handleChange}
+                      placeholder="Número do RPS"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="serieRps">
+                      Série
+                    </label>
+                    <input
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      id="serieRps"
+                      type="text"
+                      name="Serie"
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.IdentificacaoRps.Serie}
+                      onChange={handleChange}
+                      placeholder="Série do RPS"
                       required
                     />
                   </div>
@@ -375,7 +595,7 @@ const EmitirNfse = () => {
                       type="number"
                       step="0.01"
                       name="ValorServicos"
-                      value={formData.Servico.Valores.ValorServicos}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.ValorServicos}
                       onChange={handleChange}
                       placeholder="Valor dos Serviços"
                       required
@@ -391,7 +611,7 @@ const EmitirNfse = () => {
                           className="form-radio"
                           name="IssRetido"
                           value="2"
-                          checked={formData.Servico.Valores.IssRetido === '2'}
+                          checked={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.IssRetido === '2'}
                           onChange={handleChange}
                         />
                         <span className="ml-2">Não</span>
@@ -402,7 +622,7 @@ const EmitirNfse = () => {
                           className="form-radio"
                           name="IssRetido"
                           value="1"
-                          checked={formData.Servico.Valores.IssRetido === '1'}
+                          checked={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.IssRetido === '1'}
                           onChange={handleChange}
                         />
                         <span className="ml-2">Sim</span>
@@ -420,7 +640,7 @@ const EmitirNfse = () => {
                       type="number"
                       step="0.01"
                       name="Aliquota"
-                      value={formData.Servico.Valores.Aliquota}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.Aliquota}
                       onChange={handleChange}
                       placeholder="Alíquota"
                       required
@@ -436,7 +656,7 @@ const EmitirNfse = () => {
                       id="itemListaServico"
                       type="text"
                       name="ItemListaServico"
-                      value={formData.Servico.ItemListaServico}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.ItemListaServico}
                       onChange={handleChange}
                       placeholder="Item da Lista de Serviço"
                       required
@@ -452,7 +672,7 @@ const EmitirNfse = () => {
                       id="codigoTributacao"
                       type="text"
                       name="CodigoTributacaoMunicipio"
-                      value={formData.Servico.CodigoTributacaoMunicipio}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.CodigoTributacaoMunicipio}
                       onChange={handleChange}
                       placeholder="Código de Tributação"
                       required
@@ -467,7 +687,7 @@ const EmitirNfse = () => {
                       className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
                       id="discriminacao"
                       name="Discriminacao"
-                      value={formData.Servico.Discriminacao}
+                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Discriminacao}
                       onChange={handleChange}
                       placeholder="Discriminação do Serviço"
                       rows={4}
@@ -502,9 +722,63 @@ const EmitirNfse = () => {
             {error && (
               <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
                 <h3 className="font-bold">Erro:</h3>
-                <pre className="mt-2 text-sm overflow-x-auto">
-                  {typeof error === 'object' ? JSON.stringify(error, null, 2) : error}
-                </pre>
+                <div className="mt-2 text-sm overflow-x-auto max-h-96 bg-white p-2 rounded">
+                  {typeof error === 'object' && error.message ? (
+                    <div className="font-bold">{error.message}</div>
+                  ) : (
+                    <pre className="whitespace-pre-wrap">
+                      {typeof error === 'object' ? JSON.stringify(error, null, 2) : error}
+                    </pre>
+                  )}
+                </div>
+                
+                {error.logs && Array.isArray(error.logs) && (
+                  <div className="mt-4">
+                    <h3 className="font-bold">Logs:</h3>
+                    <div className="bg-gray-800 text-green-400 p-4 rounded overflow-auto max-h-96">
+                      {error.logs.map((log, index) => (
+                        <div key={index} className="mb-1">{log}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {error.soapEnvelope && (
+                  <div className="mt-4">
+                    <h3 className="font-bold">Envelope SOAP:</h3>
+                    <div className="bg-gray-900 text-yellow-400 p-4 rounded overflow-auto" style={{ maxHeight: '500px' }}>
+                      <pre className="whitespace-pre-wrap text-xs">{error.soapEnvelope}</pre>
+                    </div>
+                    <div className="mt-2">
+                      <button 
+                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
+                        onClick={() => {
+                          navigator.clipboard.writeText(error.soapEnvelope);
+                          alert('Envelope SOAP copiado para a área de transferência!');
+                        }}
+                      >
+                        Copiar Envelope SOAP
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {error.data && typeof error.data === 'string' && error.data.includes('<!DOCTYPE html>') && (
+                  <div className="mt-4">
+                    <h3 className="font-bold">Resposta HTML:</h3>
+                    <div className="bg-white border border-gray-300 p-4 rounded overflow-auto max-h-96">
+                      <iframe 
+                        srcDoc={error.data} 
+                        style={{ width: '100%', height: '300px', border: '1px solid #ddd' }} 
+                        title="Resposta HTML"
+                      />
+                      <details className="mt-2">
+                        <summary className="cursor-pointer text-blue-600">Ver código HTML</summary>
+                        <pre className="mt-2 text-xs bg-gray-100 p-2 overflow-auto">{error.data}</pre>
+                      </details>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -514,6 +788,26 @@ const EmitirNfse = () => {
                 <pre className="mt-2 text-sm overflow-x-auto">
                   {JSON.stringify(response, null, 2)}
                 </pre>
+                
+                {response.soapEnvelope && (
+                  <div className="mt-4">
+                    <h3 className="font-bold">Envelope SOAP:</h3>
+                    <div className="bg-gray-900 text-yellow-400 p-4 rounded overflow-auto max-h-96">
+                      <pre className="whitespace-pre-wrap">{response.soapEnvelope}</pre>
+                    </div>
+                  </div>
+                )}
+                
+                {response.logs && Array.isArray(response.logs) && (
+                  <div className="mt-4">
+                    <h3 className="font-bold">Logs:</h3>
+                    <div className="bg-gray-800 text-green-400 p-4 rounded overflow-auto max-h-96">
+                      {response.logs.map((log, index) => (
+                        <div key={index} className="mb-1">{log}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
