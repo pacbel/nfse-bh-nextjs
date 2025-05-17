@@ -83,7 +83,7 @@ const EmitirNfse = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === 'ambiente') {
       setFormData({
         ...formData,
@@ -131,7 +131,7 @@ const EmitirNfse = () => {
           }
         }
       });
-    /* Função que tratava o campo de razão social do prestador removida pois não é utilizada na API */
+      /* Função que tratava o campo de razão social do prestador removida pois não é utilizada na API */
     } else if (name === 'Cnpj_Tomador') {
       setFormData({
         ...formData,
@@ -274,7 +274,7 @@ const EmitirNfse = () => {
     } else if (name === 'Aliquota') {
       const aliquota = parseFloat(value) / 100; // Converte para decimal (ex: 2.5% -> 0.025)
       const valorServicos = parseFloat(formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.ValorServicos) || 0;
-      
+
       setFormData({
         ...formData,
         LoteRps: {
@@ -426,332 +426,353 @@ const EmitirNfse = () => {
         <title>Emitir NFSe - Sistema NFSe BH</title>
       </Head>
 
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 max-w-6xl">
         <div className="bg-white shadow-lg rounded-lg p-6">
           <div className="w-full">
             <div>
               <h1 className="text-2xl font-semibold text-center mb-6">Emitir NFSe</h1>
             </div>
             <form onSubmit={handleSubmit}>
-              <div className="divide-y divide-gray-200">
-                <div className="py-4 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2">Ambiente</label>
-                    <div className="flex gap-4">
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          className="form-radio"
-                          name="ambiente"
-                          value="2"
-                          checked={formData.ambiente === 2}
-                          onChange={handleChange}
-                        />
-                        <span className="ml-2">Homologação</span>
+              <div className="space-y-6">
+                {/* Ambiente */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <label className="block text-gray-700 text-sm font-bold mb-3">Ambiente</label>
+                  <div className="flex gap-6">
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        className="form-radio text-blue-600"
+                        name="ambiente"
+                        value="2"
+                        checked={formData.ambiente === 2}
+                        onChange={handleChange}
+                      />
+                      <span className="ml-2">Homologação</span>
+                    </label>
+                    <label className="inline-flex items-center">
+                      <input
+                        type="radio"
+                        className="form-radio text-blue-600"
+                        name="ambiente"
+                        value="1"
+                        checked={formData.ambiente === 1}
+                        onChange={handleChange}
+                      />
+                      <span className="ml-2">Produção</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Dados do Prestador */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Dados do Prestador</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cnpjPrestador">
+                        CNPJ do Prestador
                       </label>
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          className="form-radio"
-                          name="ambiente"
-                          value="1"
-                          checked={formData.ambiente === 1}
-                          onChange={handleChange}
-                        />
-                        <span className="ml-2">Produção</span>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="cnpjPrestador"
+                        type="text"
+                        name="Cnpj_Prestador"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Prestador.Cnpj}
+                        onChange={handleChange}
+                        placeholder="CNPJ (apenas números)"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="inscricaoMunicipal">
+                        Inscrição Municipal
                       </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="inscricaoMunicipal"
+                        type="text"
+                        name="InscricaoMunicipal"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Prestador.InscricaoMunicipal}
+                        onChange={handleChange}
+                        placeholder="Inscrição Municipal"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dados do Tomador */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Dados do Tomador</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cnpjTomador">
+                        CNPJ do Tomador
+                      </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="cnpjTomador"
+                        type="text"
+                        name="Cnpj_Tomador"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.IdentificacaoTomador.CpfCnpj.Cnpj}
+                        onChange={handleChange}
+                        placeholder="CNPJ (apenas números)"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="emailTomador">
+                        Email do Tomador
+                      </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="emailTomador"
+                        type="email"
+                        name="Email_Tomador"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.Contato.Email}
+                        onChange={handleChange}
+                        placeholder="Email"
+                        required
+                      />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="razaoSocialTomador">
+                        Razão Social do Tomador
+                      </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="razaoSocialTomador"
+                        type="text"
+                        name="RazaoSocial_Tomador"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.RazaoSocial}
+                        onChange={handleChange}
+                        placeholder="Razão Social"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dados do RPS */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Dados do RPS</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numeroRps">
+                        Número do RPS
+                      </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="numeroRps"
+                        type="text"
+                        name="Numero"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.IdentificacaoRps.Numero}
+                        onChange={handleChange}
+                        placeholder="Número do RPS"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="serieRps">
+                        Série
+                      </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="serieRps"
+                        type="text"
+                        name="Serie"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.IdentificacaoRps.Serie}
+                        onChange={handleChange}
+                        placeholder="Série do RPS"
+                        required
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dados do Serviço */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4 text-gray-800">Dados do Serviço</h3>
+
+                  {/* Valores e ISS */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="valorServicos">
+                        Valor dos Serviços (R$)
+                      </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="valorServicos"
+                        type="number"
+                        step="0.01"
+                        name="ValorServicos"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.ValorServicos}
+                        onChange={handleChange}
+                        placeholder="0,00"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="aliquota">
+                        Alíquota (%)
+                      </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="aliquota"
+                        type="number"
+                        step="0.01"
+                        name="Aliquota"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.Aliquota}
+                        onChange={handleChange}
+                        placeholder="0,00"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2">ISS Retido</label>
+                      <div className="flex gap-4 mt-8">
+                        <label className="inline-flex items-center">
+                          <input
+                            type="radio"
+                            className="form-radio text-blue-600"
+                            name="IssRetido"
+                            value="2"
+                            checked={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.IssRetido === '2'}
+                            onChange={handleChange}
+                          />
+                          <span className="ml-2">Não</span>
+                        </label>
+                        <label className="inline-flex items-center">
+                          <input
+                            type="radio"
+                            className="form-radio text-blue-600"
+                            name="IssRetido"
+                            value="1"
+                            checked={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.IssRetido === '1'}
+                            onChange={handleChange}
+                          />
+                          <span className="ml-2">Sim</span>
+                        </label>
+                      </div>
                     </div>
                   </div>
 
-                  <h3 className="text-lg font-semibold mt-4 mb-2">Dados do Prestador</h3>
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cnpjPrestador">
-                      CNPJ do Prestador
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="cnpjPrestador"
-                      type="text"
-                      name="Cnpj_Prestador"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Prestador.Cnpj}
-                      onChange={handleChange}
-                      placeholder="CNPJ (apenas números)"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="inscricaoMunicipal">
-                      Inscrição Municipal
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="inscricaoMunicipal"
-                      type="text"
-                      name="InscricaoMunicipal"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Prestador.InscricaoMunicipal}
-                      onChange={handleChange}
-                      placeholder="Inscrição Municipal"
-                      required
-                    />
-                  </div>
-
-                  {/* Campo de Razão Social do Prestador removido pois não é utilizado na API */}
-
-                  <h3 className="text-lg font-semibold mt-4 mb-2">Dados do Tomador</h3>
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="cnpjTomador">
-                      CNPJ do Tomador
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="cnpjTomador"
-                      type="text"
-                      name="Cnpj_Tomador"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.IdentificacaoTomador.CpfCnpj.Cnpj}
-                      onChange={handleChange}
-                      placeholder="CNPJ (apenas números)"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="razaoSocialTomador">
-                      Razão Social do Tomador
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="razaoSocialTomador"
-                      type="text"
-                      name="RazaoSocial_Tomador"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.RazaoSocial}
-                      onChange={handleChange}
-                      placeholder="Razão Social"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="emailTomador">
-                      Email do Tomador
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="emailTomador"
-                      type="email"
-                      name="Email_Tomador"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Tomador.Contato.Email}
-                      onChange={handleChange}
-                      placeholder="Email"
-                      required
-                    />
-                  </div>
-
-                  <h3 className="text-lg font-semibold mt-4 mb-2">Dados do RPS</h3>
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="numeroRps">
-                      Número do RPS
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="numeroRps"
-                      type="text"
-                      name="Numero"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.IdentificacaoRps.Numero}
-                      onChange={handleChange}
-                      placeholder="Número do RPS"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="serieRps">
-                      Série
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="serieRps"
-                      type="text"
-                      name="Serie"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.IdentificacaoRps.Serie}
-                      onChange={handleChange}
-                      placeholder="Série do RPS"
-                      required
-                    />
-                  </div>
-
-                  <h3 className="text-lg font-semibold mt-4 mb-2">Dados do Serviço</h3>
-                  
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="valorServicos">
-                      Valor dos Serviços
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="valorServicos"
-                      type="number"
-                      step="0.01"
-                      name="ValorServicos"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.ValorServicos}
-                      onChange={handleChange}
-                      placeholder="Valor dos Serviços"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2">ISS Retido</label>
-                    <div className="flex gap-4">
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          className="form-radio"
-                          name="IssRetido"
-                          value="2"
-                          checked={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.IssRetido === '2'}
-                          onChange={handleChange}
-                        />
-                        <span className="ml-2">Não</span>
+                  {/* Códigos */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="itemListaServico">
+                        Item da Lista de Serviço
                       </label>
-                      <label className="inline-flex items-center">
-                        <input
-                          type="radio"
-                          className="form-radio"
-                          name="IssRetido"
-                          value="1"
-                          checked={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.IssRetido === '1'}
-                          onChange={handleChange}
-                        />
-                        <span className="ml-2">Sim</span>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="itemListaServico"
+                        type="text"
+                        name="ItemListaServico"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.ItemListaServico}
+                        onChange={handleChange}
+                        placeholder="Ex: 01.01"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="codigoTributacao">
+                        Código de Tributação
                       </label>
+                      <input
+                        className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="codigoTributacao"
+                        type="text"
+                        name="CodigoTributacaoMunicipio"
+                        value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.CodigoTributacaoMunicipio}
+                        onChange={handleChange}
+                        placeholder="Código de Tributação"
+                        required
+                      />
                     </div>
                   </div>
 
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="aliquota">
-                      Alíquota (%)
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="aliquota"
-                      type="number"
-                      step="0.01"
-                      name="Aliquota"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Valores.Aliquota}
-                      onChange={handleChange}
-                      placeholder="Alíquota"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="itemListaServico">
-                      Item da Lista de Serviço
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="itemListaServico"
-                      type="text"
-                      name="ItemListaServico"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.ItemListaServico}
-                      onChange={handleChange}
-                      placeholder="Item da Lista de Serviço"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="codigoTributacao">
-                      Código de Tributação
-                    </label>
-                    <input
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                      id="codigoTributacao"
-                      type="text"
-                      name="CodigoTributacaoMunicipio"
-                      value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.CodigoTributacaoMunicipio}
-                      onChange={handleChange}
-                      placeholder="Código de Tributação"
-                      required
-                    />
-                  </div>
-
-                  <div className="mb-4">
+                  {/* Discriminação */}
+                  <div>
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="discriminacao">
                       Discriminação do Serviço
                     </label>
                     <textarea
-                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                      className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
                       id="discriminacao"
                       name="Discriminacao"
                       value={formData.LoteRps.ListaRps.Rps.InfRps.Servico.Discriminacao}
                       onChange={handleChange}
-                      placeholder="Discriminação do Serviço"
+                      placeholder="Descrição detalhada do serviço prestado"
                       rows={4}
                       required
                     ></textarea>
                   </div>
+                </div>
 
-                  <div className="pt-4">
+                {/* Botões */}
+                <div className="flex flex-col sm:flex-row gap-4 pt-6">
+                  <button
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                    type="submit"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <span className="flex items-center justify-center">
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processando...
+                      </span>
+                    ) : (
+                      'Emitir NFSe'
+                    )}
+                  </button>
+
+                  <Link href="/">
                     <button
-                      className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                      type="submit"
-                      disabled={loading}
+                      className="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg transition duration-200 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+                      type="button"
                     >
-                      {loading ? 'Processando...' : 'Emitir NFSe'}
+                      Voltar ao Menu Principal
                     </button>
-                  </div>
-                  
-                  <div className="pt-4">
-                    <Link href="/">
-                      <button
-                        className="w-full bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                        type="button"
-                      >
-                        Voltar ao Menu Principal
-                      </button>
-                    </Link>
-                  </div>
+                  </Link>
                 </div>
               </div>
             </form>
 
             {error && (
-              <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                <h3 className="font-bold">Erro:</h3>
-                <div className="mt-2 text-sm overflow-x-auto max-h-96 bg-white p-2 rounded">
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg">
+                <h3 className="font-bold text-lg mb-2">Erro:</h3>
+                <div className="mt-2 text-sm overflow-x-auto max-h-96 bg-white p-3 rounded border">
                   {typeof error === 'object' && error.message ? (
-                    <div className="font-bold">{error.message}</div>
+                    <div className="font-semibold">{error.message}</div>
                   ) : (
                     <pre className="whitespace-pre-wrap">
                       {typeof error === 'object' ? JSON.stringify(error, null, 2) : error}
                     </pre>
                   )}
                 </div>
-                
+
                 {error.logs && Array.isArray(error.logs) && (
                   <div className="mt-4">
-                    <h3 className="font-bold">Logs:</h3>
-                    <div className="bg-gray-800 text-green-400 p-4 rounded overflow-auto max-h-96">
+                    <h4 className="font-semibold mb-2">Logs:</h4>
+                    <div className="bg-gray-900 text-green-400 p-4 rounded overflow-auto max-h-96 font-mono text-sm">
                       {error.logs.map((log, index) => (
                         <div key={index} className="mb-1">{log}</div>
                       ))}
                     </div>
                   </div>
                 )}
-                
+
                 {error.soapEnvelope && (
                   <div className="mt-4">
-                    <h3 className="font-bold">Envelope SOAP:</h3>
+                    <h4 className="font-semibold mb-2">Envelope SOAP:</h4>
                     <div className="bg-gray-900 text-yellow-400 p-4 rounded overflow-auto" style={{ maxHeight: '500px' }}>
-                      <pre className="whitespace-pre-wrap text-xs">{error.soapEnvelope}</pre>
+                      <pre className="whitespace-pre-wrap text-xs font-mono">{error.soapEnvelope}</pre>
                     </div>
-                    <div className="mt-2">
-                      <button 
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded text-xs"
+                    <div className="mt-3">
+                      <button
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded text-sm transition duration-200"
                         onClick={() => {
                           navigator.clipboard.writeText(error.soapEnvelope);
                           alert('Envelope SOAP copiado para a área de transferência!');
@@ -762,19 +783,20 @@ const EmitirNfse = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {error.data && typeof error.data === 'string' && error.data.includes('<!DOCTYPE html>') && (
                   <div className="mt-4">
-                    <h3 className="font-bold">Resposta HTML:</h3>
+                    <h4 className="font-semibold mb-2">Resposta HTML:</h4>
                     <div className="bg-white border border-gray-300 p-4 rounded overflow-auto max-h-96">
-                      <iframe 
-                        srcDoc={error.data} 
-                        style={{ width: '100%', height: '300px', border: '1px solid #ddd' }} 
+                      <iframe
+                        srcDoc={error.data}
+                        style={{ width: '100%', height: '300px', border: '1px solid #ddd' }}
                         title="Resposta HTML"
+                        className="rounded"
                       />
-                      <details className="mt-2">
-                        <summary className="cursor-pointer text-blue-600">Ver código HTML</summary>
-                        <pre className="mt-2 text-xs bg-gray-100 p-2 overflow-auto">{error.data}</pre>
+                      <details className="mt-3">
+                        <summary className="cursor-pointer text-blue-600 hover:text-blue-800">Ver código HTML</summary>
+                        <pre className="mt-2 text-xs bg-gray-100 p-3 overflow-auto rounded font-mono">{error.data}</pre>
                       </details>
                     </div>
                   </div>
@@ -783,25 +805,25 @@ const EmitirNfse = () => {
             )}
 
             {response && (
-              <div className="mt-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                <h3 className="font-bold">Resposta:</h3>
-                <pre className="mt-2 text-sm overflow-x-auto">
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 text-green-800 rounded-lg">
+                <h3 className="font-bold text-lg mb-2">Resposta:</h3>
+                <pre className="mt-2 text-sm overflow-x-auto bg-white p-3 rounded border font-mono">
                   {JSON.stringify(response, null, 2)}
                 </pre>
-                
+
                 {response.soapEnvelope && (
                   <div className="mt-4">
-                    <h3 className="font-bold">Envelope SOAP:</h3>
+                    <h4 className="font-semibold mb-2">Envelope SOAP:</h4>
                     <div className="bg-gray-900 text-yellow-400 p-4 rounded overflow-auto max-h-96">
-                      <pre className="whitespace-pre-wrap">{response.soapEnvelope}</pre>
+                      <pre className="whitespace-pre-wrap font-mono text-sm">{response.soapEnvelope}</pre>
                     </div>
                   </div>
                 )}
-                
+
                 {response.logs && Array.isArray(response.logs) && (
                   <div className="mt-4">
-                    <h3 className="font-bold">Logs:</h3>
-                    <div className="bg-gray-800 text-green-400 p-4 rounded overflow-auto max-h-96">
+                    <h4 className="font-semibold mb-2">Logs:</h4>
+                    <div className="bg-gray-900 text-green-400 p-4 rounded overflow-auto max-h-96 font-mono text-sm">
                       {response.logs.map((log, index) => (
                         <div key={index} className="mb-1">{log}</div>
                       ))}
