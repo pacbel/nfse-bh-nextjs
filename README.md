@@ -543,16 +543,17 @@ Em caso de dúvidas ou problemas:
 - **Produção**: Ambiente oficial
 
 
+## Referências
+http://www.pbh.gov.br/bhissdigital/portal/print.php?content=nfse/documentacao.php
 
 
-https://www.pacbel.com.br  
+
+|Duvidas?|  
+|---|  
 
 **Carlos Pacheco**  
 https://www.pacbel.com.br  
 carlos.pacheco@pacbel.com.br  
 (31)3191-9870 (WhatsApp)
 
-## Referências
-
-http://www.pbh.gov.br/bhissdigital/portal/print.php?content=nfse/documentacao.php
 
