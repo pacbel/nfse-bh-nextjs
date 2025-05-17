@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { NfseRequest } from "../../interfaces/nfse";
+import type { CertificadoRequest } from "../../types/certificado";
 import axios from "axios";
 import CertificateUpload from "../../components/CertificateUpload";
 
@@ -60,54 +60,58 @@ export default function TesteEmissao() {
   const [status, setStatus] = useState("");
   const [response, setResponse] = useState("");
 
-  const dadosNota: NfseRequest = {
-    prestador: {
-      cnpj: "05065736000161",
-      inscricaoMunicipal: "01733890014",
-      razaoSocial: "PACBEL - PROGRAMAS PERSONALIZADOS LTDA",
-      nomeFantasia: "SISTEMA VIRTUAL",
-      endereco: {
-        endereco: "RUA SOLANGE BERNARDES DECLIE",
-        numero: "150",
-        complemento: "CASA 2",
-        bairro: "Diamante",
-        codigoMunicipio: "3106200",
-        uf: "MG",
-        cep: "30627222",
+  const dadosNota: CertificadoRequest = {
+    Prestador: {
+      CpfCnpj: {
+        Cnpj: "05065736000161"
       },
-      contato: {
-        telefone: "3196800154",
-        email: "financeiro@pacbel.com.br",
+      InscricaoMunicipal: "01733890014",
+      RazaoSocial: "PACBEL - PROGRAMAS PERSONALIZADOS LTDA",
+      NomeFantasia: "SISTEMA VIRTUAL",
+      Endereco: {
+        Endereco: "RUA SOLANGE BERNARDES DECLIE",
+        Numero: "150",
+        Complemento: "CASA 2",
+        Bairro: "Diamante",
+        CodigoMunicipio: "3106200",
+        Uf: "MG",
+        Cep: "30627222",
       },
-    },
-    tomador: {
-      cnpj: "23066373000160",
-      razaoSocial: "ASSOCIACAO DO VIA CAFE GARDEN SHOPPING",
-      endereco: {
-        endereco: "Rua Humberto Pizzo",
-        numero: "999",
-        bairro: "Jardim Canaa",
-        codigoMunicipio: "3170701",
-        uf: "MG",
-        cep: "37026280",
-      },
-      contato: {
-        email: "amanda.souza@viacafeshoppingcenter.com.br",
+      Contato: {
+        Telefone: "3196800154",
+        Email: "financeiro@pacbel.com.br",
       },
     },
-    servico: {
-      valores: {
-        valorServicos: 950.0,
-        issRetido: 2,
-        valorIss: 23.75,
-        baseCalculo: 950.0,
-        aliquota: 0.025,
-        valorLiquidoNfse: 950.0,
+    Tomador: {
+      CpfCnpj: {
+        Cnpj: "23066373000160"
       },
-      itemListaServico: "1.03",
-      codigoTributacaoMunicipio: "10300188",
-      discriminacao: "Licenciamento ou cessão de uso de direitos de software",
-      codigoMunicipio: "3106200",
+      RazaoSocial: "ASSOCIACAO DO VIA CAFE GARDEN SHOPPING",
+      Endereco: {
+        Endereco: "Rua Humberto Pizzo",
+        Numero: "999",
+        Bairro: "Jardim Canaa",
+        CodigoMunicipio: "3170701",
+        Uf: "MG",
+        Cep: "37026280",
+      },
+      Contato: {
+        Email: "amanda.souza@viacafeshoppingcenter.com.br",
+      },
+    },
+    Servico: {
+      Valores: {
+        ValorServicos: 950.0,
+        IssRetido: 2,
+        ValorIss: 23.75,
+        BaseCalculo: 950.0,
+        Aliquota: 0.025,
+        ValorLiquidoNfse: 950.0,
+      },
+      ItemListaServico: "1.07",
+      CodigoTributacaoMunicipio: "010700188",
+      Discriminacao: "SERVICOS DE SUPORTE E MANUTENCAO EM PROGRAMAS DE COMPUTADOR, PERIODO DE 01/01/2023 A 31/01/2023",
+      CodigoMunicipio: "3106200",
     },
   };
 
