@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import type { NfseRequest } from "../../src/interfaces/nfse";
+import type { NfseRequest } from "../../interfaces/nfse";
 import axios from "axios";
-import CertificateUpload from "../../src/components/CertificateUpload";
+import CertificateUpload from "../../components/CertificateUpload";
 
 // Função para formatar XML
 function formatXML(xml: string): string {
