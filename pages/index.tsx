@@ -1,6 +1,7 @@
 import React from "react";
 import Head from "next/head";
 import Link from "next/link";
+import CertificateUploadSimple from "../components/CertificateUploadSimple";
 
 const Home = () => {
   const menuItems = [
@@ -21,12 +22,15 @@ const Home = () => {
       </Head>
 
       <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-10">
+        <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Sistema NFSe BH</h1>
           <p className="text-lg text-gray-600">
             Emissão e gerenciamento de Notas Fiscais de Serviços Eletrônicas para Belo Horizonte
           </p>
         </div>
+        
+        {/* Componente de Upload de Certificado */}
+        <CertificateUploadSimple />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {menuItems.map((item, index) => (

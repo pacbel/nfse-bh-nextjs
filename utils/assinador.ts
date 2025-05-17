@@ -3,6 +3,8 @@ import { SignedXml } from 'xml-crypto';
 import forge from 'node-forge';
 import fs from 'fs';
 
+// Função para assinar XML usando diretamente o arquivo PFX
+
 export function assinarXmlNfsePbh(xml: string, pfxPath: string, senha: string): string {
   try {
     console.log('1. Iniciando processo de assinatura');

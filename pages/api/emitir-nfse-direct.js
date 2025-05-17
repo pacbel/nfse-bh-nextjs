@@ -6,6 +6,7 @@ import { buildNfseXml } from "../../utils/xmlBuilder";
 import { writeLog } from "./logs";
 import { nfseDataTemplate } from "../../utils/nfseDataTemplate";
 import { assinarXmlNfsePbh } from "../../utils/assinador";
+import { findCertificatePath } from "../../utils/certificateUtils";
 import { createSoapEnvelope } from "../../utils/soapBuilder";
 import { validateXsdGlobal } from "../../utils/validateXsdGlobal";
 
@@ -70,8 +71,39 @@ export default async function handler(req, res) {
 
   // Assinar o XML
   addLog("Assinando XML...");
-  const certificadoPath = path.resolve("certs", "05065736000161", "336724062546f53e.pfx");
-  const certificadoSenha = "Camgfv!@#2024";
+  
+  // Obter o CNPJ do emitente a partir dos dados da requisição ou da variável de ambiente
+  const cnpj = req.body.LoteRps?.CpfCnpj?.Cnpj || 
+               process.env.CERT_CNPJ || 
+               "05065736000161";
+  
+  let certificadoPath;
+  try {
+    // Usar a função utilitária para encontrar o certificado
+    certificadoPath = findCertificatePath(cnpj);
+    addLog(`Certificado encontrado: ${certificadoPath}`);
+  } catch (err) {
+    addLog(`[ERRO] ${err.message}`);
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+      logs,
+      error: err.message
+    });
+  }
+  
+  const certificadoSenha = process.env.CERT_PASSWORD;
+  
+  if (!certificadoSenha) {
+    addLog(`[ERRO] Senha do certificado não configurada nas variáveis de ambiente`);
+    return res.status(400).json({
+      success: false,
+      message: "Senha do certificado não configurada",
+      logs,
+      error: "Senha do certificado não configurada nas variáveis de ambiente (CERT_PASSWORD)."
+    });
+  }
+  
   const xmlSigned = assinarXmlNfsePbh(xml, certificadoPath, certificadoSenha);
   const saveXML02 = path.join(assinadasDir, `nfse_assinada_${req.body.NumeroLote || "1"}_${timestamp}.xml`);
   await fs.promises.writeFile(saveXML02, xmlSigned, 'utf8');
@@ -112,16 +144,13 @@ export default async function handler(req, res) {
   console.log(requestUrl);
   
   // Configuração do agente HTTPS
+  // Usamos o certificado PFX encontrado pela função findCertificatePath
   const agent = new https.Agent({
     rejectUnauthorized: true,
     keepAlive: false,
     timeout: 180000,
-    cert: fs.existsSync(process.env.CERT_CRT_PATH)
-      ? fs.readFileSync(process.env.CERT_CRT_PATH)
-      : undefined,
-    key: fs.existsSync(process.env.CERT_KEY_PATH)
-      ? fs.readFileSync(process.env.CERT_KEY_PATH)
-      : undefined
+    pfx: fs.readFileSync(certificadoPath),
+    passphrase: certificadoSenha
   });
 
   // Chamada HTTP direta para a Prefeitura

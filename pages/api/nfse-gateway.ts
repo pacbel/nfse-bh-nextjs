@@ -7,8 +7,11 @@ import * as path from "path";
 import axios from "axios";
 import https from "https";
 import { buildNfseXml } from '../../utils/xmlBuilder';
+import { writeLog } from "./logs";
+import { nfseDataTemplate } from "../../utils/nfseDataTemplate";
 import { createSoapEnvelope } from '../../utils/soapBuilder';
 import { validateXsdGlobal } from '../../utils/validateXsdGlobal';
+import { findCertificatePath } from "../../utils/certificateUtils";
 
 // Token secreto para autenticação (deve ser configurado em variáveis de ambiente)
 const API_TOKEN = process.env.API_TOKEN || '123456';
@@ -78,9 +81,30 @@ export default async function handler(
       });
     }
 
-    // Monta o caminho dos certificados baseado no CNPJ do emitente
-    const certPath = path.join(process.cwd(), 'certs', emitente.identificacao, 'certificate.crt');
-    const keyPath = path.join(process.cwd(), 'certs', emitente.identificacao, 'certificate.key');
+    // Usa a função utilitária para encontrar o certificado do emitente
+    let certificadoPath: string;
+    try {
+      certificadoPath = findCertificatePath(emitente.identificacao);
+      console.log(`Certificado encontrado: ${certificadoPath}`);
+    } catch (err) {
+      const error = err as Error;
+      console.error(`[ERRO] ${error.message}`);
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+        error: error.message
+      });
+    }
+    
+    // Verifica se a senha do certificado está configurada
+    const certificadoSenha = process.env.CERT_PASSWORD;
+    if (!certificadoSenha) {
+      return res.status(400).json({
+        success: false,
+        message: "Senha do certificado não configurada",
+        error: "Senha do certificado não configurada nas variáveis de ambiente (CERT_PASSWORD)."
+      });
+    }
 
     // Gera o XML da NFSe
     const requestXml = buildNfseXml(nfseData);
@@ -117,18 +141,15 @@ export default async function handler(
     // fs.writeFileSync(xmlSoapPath, xmlSoap);
 
     // Configuração do agente HTTPS
+    // Usamos o certificado PFX diretamente, sem precisar de arquivos .crt e .key separados
+    // O Node.js/HTTPS suporta certificados PFX diretamente
     const agent = new https.Agent({
       rejectUnauthorized: true,
       keepAlive: false,
       timeout: 180000,
-      cert: fs.existsSync(certPath)
-        ? fs.readFileSync(certPath)
-        : undefined,
-      key: fs.existsSync(keyPath)
-        ? fs.readFileSync(keyPath)
-        : undefined,
+      pfx: fs.readFileSync(certificadoPath),
+      passphrase: certificadoSenha
     });
-    // Já temos certPath e keyPath definidos acima
 
     // Headers SOAP
     const SOAP_HEADERS = {

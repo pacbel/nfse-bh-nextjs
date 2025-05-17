@@ -96,46 +96,49 @@ export default async function handler(
 
       console.log("Lendo arquivo do certificado (.pfx)...");
       const pfxBuffer = fs.readFileSync(certificateFile.filepath);
-      console.log("Arquivo lido com sucesso. Iniciando conversão para .crt e .key...");
+      console.log("Arquivo lido com sucesso. Salvando arquivo PFX...");
 
-      // Caminhos de saída
-      const keyPath = path.join(certDir, "private.key");
-      const crtPath = path.join(certDir, "certificate.crt");
-      const pfxPath = path.join(certDir, "certificate.pfx");
+      // Obter o nome do arquivo original e garantir que termine com .pfx
+      const originalFilename = certificateFile.originalFilename || "certificate.pfx";
+      const filename = originalFilename.toLowerCase().endsWith(".pfx") 
+        ? originalFilename 
+        : `${originalFilename}.pfx`;
+      
+      // Caminho de saída para o arquivo PFX
+      const pfxPath = path.join(certDir, filename);
       try {
         // Salvar o arquivo PFX original
         fs.writeFileSync(pfxPath, pfxBuffer);
         console.log("Arquivo PFX salvo em:", pfxPath);
-        console.log("Convertendo .pfx para .key e .crt usando node-forge...");
         
-        // Converter o buffer para formato binário
-        const pfxData = Buffer.from(pfxBuffer).toString('binary');
-        
-        // Criar buffer forge e parsear o PKCS#12
-        const p12Asn1 = forge.asn1.fromDer(pfxData);
-        const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
-        
-        // Extrair chaves e certificados
-        const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag];
-        const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag];
-        
-        if (!keyBags || !keyBags[0] || !certBags || !certBags[0]) {
-          throw new Error('Não foi possível extrair a chave privada ou certificado do arquivo PFX');
+        // Verificar se o certificado é válido tentando abri-lo
+        try {
+          // Converter o buffer para formato binário
+          const pfxData = Buffer.from(pfxBuffer).toString('binary');
+          
+          // Criar buffer forge e parsear o PKCS#12
+          const p12Asn1 = forge.asn1.fromDer(pfxData);
+          const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+          
+          // Extrair chaves e certificados para validação
+          const keyBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag })[forge.pki.oids.pkcs8ShroudedKeyBag];
+          const certBags = p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag];
+          
+          if (!keyBags || !keyBags[0] || !certBags || !certBags[0]) {
+            throw new Error('Não foi possível extrair a chave privada ou certificado do arquivo PFX');
+          }
+          
+          console.log("Certificado validado com sucesso");
+        } catch (validationError) {
+          console.error('Erro ao validar certificado:', validationError);
+          throw new Error(`Certificado inválido ou senha incorreta: ${validationError.message}`);
         }
         
-        // Converter para PEM
-        const privateKeyPem = forge.pki.privateKeyToPem(keyBags[0].key);
-        const certificatePem = forge.pki.certificateToPem(certBags[0].cert);
-        
-        // Salvar os arquivos
-        fs.writeFileSync(keyPath, privateKeyPem);
-        fs.writeFileSync(crtPath, certificatePem);
-        
-        console.log("Conversão com node-forge concluída. Arquivos salvos:", keyPath, crtPath);
+        console.log("Certificado salvo com sucesso em:", pfxPath);
         res.status(200).json({ success: true, message: "Certificado enviado com sucesso" });
       } catch (err) {
-        console.error('Erro ao converter com node-forge:', err);
-        res.status(400).json({ error: 'Falha ao converter o certificado: ' + err.message });
+        console.error('Erro ao processar o certificado:', err);
+        res.status(400).json({ error: 'Falha ao processar o certificado: ' + err.message });
       } finally {
         // Limpar arquivo temporário
         if (fs.existsSync(certificateFile.filepath)) {

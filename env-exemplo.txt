@@ -16,8 +16,6 @@ USER_AGENT=Apache-HttpClient/4.5.5 (Java/1.8.0_144)
 # Caminho para o certificado digital
 CERT_PATH=./certs/CNPJ_EMPRESA/cert.pfx
 CERT_PASSWORD=SenhaDoSeuCertificado
-CERT_CRT_PATH=./certs/CNPJ_EMPRESA/certificate.crt
-CERT_KEY_PATH=./certs/CNPJ_EMPRESA/certificate.key
 
 # Caminhos para schemas XSD
 XSD_SCHEMA_PATH=./documentacao/nfse_schemas10/nfse.xsd
