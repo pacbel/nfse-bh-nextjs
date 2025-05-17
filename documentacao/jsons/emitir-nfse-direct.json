@@ -1,0 +1,75 @@
+{
+  "LoteRps": {
+    "Id": "lote",
+    "versao": "1.00",
+    "NumeroLote": "1",
+    "Cnpj": "05065736000161",
+    "InscricaoMunicipal": "01733890014",
+    "QuantidadeRps": 1,
+    "ListaRps": {
+      "Rps": {
+        "Id": "15HOMOL",
+        "InfRps": {
+          "Id": "rps:15HOMOL", 
+          "IdentificacaoRps": {
+            "Numero": "15",
+            "Serie": "HOMOL",
+            "Tipo": "1"
+          },
+          "DataEmissao": "2025-05-14T20:28:00",
+          "NaturezaOperacao": "1",
+          "OptanteSimplesNacional": "2",
+          "IncentivadorCultural": "2",
+          "Status": "1",
+          "Servico": {
+            "Valores": {
+              "ValorServicos": "2800.80",
+              "BaseCalculo": "2800.80",
+              "ValorDeducoes": "0",
+              "ValorPis": "0",
+              "ValorCofins": "0",
+              "ValorInss": "0",
+              "ValorIr": "0",
+              "ValorCsll": "0",
+              "IssRetido": "2",
+              "OutrasRetencoes": "0",
+              "Aliquota": "0.025",
+              "DescontoIncondicionado": "0",
+              "DescontoCondicionado": "0"
+            },
+            "ItemListaServico": "1.03",
+            "CodigoTributacaoMunicipio": "10300188",
+            "Discriminacao": "LICENCIAMENTO OU CESSÃO DE DIREITOS DE USO DE PROGRAMAS DE COMPUTADOR",
+            "CodigoMunicipio": "3106200"
+          },
+          "Prestador": {
+            "Cnpj": "05065736000161",
+            "InscricaoMunicipal": "01733890014"
+          },
+          "Tomador": {
+            "IdentificacaoTomador": {
+              "CpfCnpj": {
+                "Cnpj": "17585568000114"
+              },
+              "InscricaoMunicipal": ""
+            },
+            "RazaoSocial": "ASSOCIACAO DO AMAPA GARDEN SHOPPING",
+            "Endereco": {
+              "Endereco": "Rodovia Juscelino Kubitschek",
+              "Numero": "2151",
+              "Complemento": "",
+              "Bairro": "Universidade",
+              "CodigoMunicipio": "1600303",
+              "Uf": "AP",
+              "Cep": "68903419"
+            },
+            "Contato": {
+              "Telefone": "3199999999",
+              "Email": "contato@associacaoamapa.com.br"
+            }
+          }
+        }
+      }
+    }
+  }
+}

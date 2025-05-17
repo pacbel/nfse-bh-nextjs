@@ -1,19 +1,19 @@
-// Template para o Mu00e9todo 5: Consulta de NFS-e
+// Template para o Método 5: Consulta de NFS-e
 
 export const nfseDataTemplateMetodo5 = {
   Prestador: {
-    Cnpj: '05065736000161',
-    InscricaoMunicipal: '01733890014'
+    Cnpj: '23456789000123',
+    InscricaoMunicipal: '12345678901'
   },
   PeriodoEmissao: {
     DataInicial: '2025-05-01',
-    DataFinal: '2025-05-16'
+    DataFinal: '2025-05-17'
   },
   // Campos opcionais que podem ser usados conforme necessidade
   // Tomador: {
   //   CpfCnpj: {
-  //     Cnpj: '17585568000114'
+  //     Cpf: '52998224725'
   //   }
   // },
-  // NumeroNfse: '123456'
+  // NumeroNfse: '202500000123'
 };

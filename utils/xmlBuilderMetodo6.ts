@@ -8,7 +8,7 @@ export function buildCancelarNfseXml(data: CancelarNfseEnvio): string {
   }
 
   // Funções auxiliares para acessar propriedades de forma segura
-  const safeGet = (obj: any, path: string, defaultValue: string = ''): string => {
+  const safeGet = (obj: any, path: string, defaultValue?: string): string | undefined => {
     const parts = path.split('.');
     let current = obj;
 
@@ -19,24 +19,64 @@ export function buildCancelarNfseXml(data: CancelarNfseEnvio): string {
       current = current[part];
     }
 
-    return current !== undefined && current !== null ? current : defaultValue;
+    // Retorna undefined para valores vazios, hífen ou apenas espaços
+    if (
+      current === undefined || 
+      current === null || 
+      current === '-' || 
+      (typeof current === 'string' && (current.trim() === '' || current.trim() === '-'))
+    ) {
+      return defaultValue;
+    }
+
+    return current;
+  };
+
+  // Função para verificar se um valor existe e deve ser incluído no XML
+  const shouldIncludeField = (value: any): boolean => {
+    return value !== undefined && value !== null && value !== '';
   };
 
   // Construir o XML completo
-  const completeXml = `<?xml version="1.0" encoding="UTF-8"?>
-<CancelarNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">
-	<Pedido xmlns="http://www.abrasf.org.br/nfse.xsd">
-		<InfPedidoCancelamento Id="${safeGet(data, 'Pedido.InfPedidoCancelamento.Id', '')}">
-			<IdentificacaoNfse>
-				<Numero>${safeGet(data, 'Pedido.InfPedidoCancelamento.IdentificacaoNfse.Numero', '')}</Numero>
-				<Cnpj>${safeGet(data, 'Pedido.InfPedidoCancelamento.IdentificacaoNfse.Cnpj', '05065736000161')}</Cnpj>
-				<InscricaoMunicipal>${safeGet(data, 'Pedido.InfPedidoCancelamento.IdentificacaoNfse.InscricaoMunicipal', '01733890014')}</InscricaoMunicipal>
-				<CodigoMunicipio>${safeGet(data, 'Pedido.InfPedidoCancelamento.IdentificacaoNfse.CodigoMunicipio', '3106200')}</CodigoMunicipio>
-			</IdentificacaoNfse>
-			<CodigoCancelamento>${safeGet(data, 'Pedido.InfPedidoCancelamento.CodigoCancelamento', '2')}</CodigoCancelamento>
-		</InfPedidoCancelamento>
-	</Pedido>
-</CancelarNfseEnvio>`;
+  const xmlParts: string[] = [];
+  
+  // Iniciar o XML
+  xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>');
+  xmlParts.push('<CancelarNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">');
+  xmlParts.push('	<Pedido xmlns="http://www.abrasf.org.br/nfse.xsd">');
+  
+  // InfPedidoCancelamento (obrigatório)
+  const idPedido = safeGet(data, 'Pedido.InfPedidoCancelamento.Id');
+  xmlParts.push(`		<InfPedidoCancelamento Id="${idPedido}">`);
+  
+  // IdentificacaoNfse (obrigatório)
+  xmlParts.push('			<IdentificacaoNfse>');
+  
+  const numeroNfse = safeGet(data, 'Pedido.InfPedidoCancelamento.IdentificacaoNfse.Numero');
+  xmlParts.push(`				<Numero>${numeroNfse}</Numero>`);
+  
+  const cnpj = safeGet(data, 'Pedido.InfPedidoCancelamento.IdentificacaoNfse.Cnpj');
+  xmlParts.push(`				<Cnpj>${cnpj}</Cnpj>`);
+  
+  const inscricaoMunicipal = safeGet(data, 'Pedido.InfPedidoCancelamento.IdentificacaoNfse.InscricaoMunicipal');
+  xmlParts.push(`				<InscricaoMunicipal>${inscricaoMunicipal}</InscricaoMunicipal>`);
+  
+  const codigoMunicipio = safeGet(data, 'Pedido.InfPedidoCancelamento.IdentificacaoNfse.CodigoMunicipio');
+  xmlParts.push(`				<CodigoMunicipio>${codigoMunicipio}</CodigoMunicipio>`);
+  
+  xmlParts.push('			</IdentificacaoNfse>');
+  
+  // CodigoCancelamento (obrigatório, padrão 2 = Serviço não prestado)
+  const codigoCancelamento = safeGet(data, 'Pedido.InfPedidoCancelamento.CodigoCancelamento') || '2';
+  xmlParts.push(`			<CodigoCancelamento>${codigoCancelamento}</CodigoCancelamento>`);
+  
+  // Fechar as tags
+  xmlParts.push('		</InfPedidoCancelamento>');
+  xmlParts.push('	</Pedido>');
+  xmlParts.push('</CancelarNfseEnvio>');
+  
+  // Juntar todas as partes do XML
+  const completeXml = xmlParts.join('\n');
 
   // Normalizar o XML removendo indentações e quebras de linha
   const normalizedXml = completeXml

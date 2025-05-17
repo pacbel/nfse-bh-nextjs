@@ -1,9 +1,9 @@
-// Template para o Mu00e9todo 2: Consulta de Situau00e7u00e3o de Lote de RPS
+// Template para o Método 2: Consulta de Situação de Lote de RPS
 
 export const nfseDataTemplateMetodo2 = {
   Prestador: {
-    Cnpj: '05065736000161',
-    InscricaoMunicipal: '01733890014'
+    Cnpj: '23456789000123',
+    InscricaoMunicipal: '12345678901'
   },
-  Protocolo: 'PROTOCOLO_EXEMPLO' // Substitua pelo protocolo real
+  Protocolo: 'ABC123456789' // Protocolo fictício
 };

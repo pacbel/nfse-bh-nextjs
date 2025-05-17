@@ -8,7 +8,7 @@ export function buildConsultarNfseXml(data: ConsultarNfseEnvio): string {
   }
 
   // Funções auxiliares para acessar propriedades de forma segura
-  const safeGet = (obj: any, path: string, defaultValue: string = ''): string => {
+  const safeGet = (obj: any, path: string, defaultValue?: string): string | undefined => {
     const parts = path.split('.');
     let current = obj;
 
@@ -19,88 +19,118 @@ export function buildConsultarNfseXml(data: ConsultarNfseEnvio): string {
       current = current[part];
     }
 
-    return current !== undefined && current !== null ? current : defaultValue;
+    // Retorna undefined para valores vazios, hífen ou apenas espaços
+    if (
+      current === undefined || 
+      current === null || 
+      current === '-' || 
+      (typeof current === 'string' && (current.trim() === '' || current.trim() === '-'))
+    ) {
+      return defaultValue;
+    }
+
+    return current;
+  };
+
+  // Função para verificar se um valor existe e deve ser incluído no XML
+  const shouldIncludeField = (value: any): boolean => {
+    return value !== undefined && value !== null && value !== '';
   };
 
   // Construir o XML completo
-  let completeXml = `<?xml version="1.0" encoding="UTF-8"?>
-<ConsultarNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">
-	<Prestador>
-		<Cnpj>${safeGet(data, 'Prestador.Cnpj', '05065736000161')}</Cnpj>
-		<InscricaoMunicipal>${safeGet(data, 'Prestador.InscricaoMunicipal', '01733890014')}</InscricaoMunicipal>
-	</Prestador>`;
-
+  const xmlParts: string[] = [];
+  
+  // Iniciar o XML
+  xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>');
+  xmlParts.push('<ConsultarNfseEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">');
+  
+  // Prestador (obrigatório)
+  xmlParts.push('	<Prestador>');
+  const cnpj = safeGet(data, 'Prestador.Cnpj');
+  xmlParts.push(`		<Cnpj>${cnpj}</Cnpj>`);
+  
+  const inscricaoMunicipal = safeGet(data, 'Prestador.InscricaoMunicipal');
+  xmlParts.push(`		<InscricaoMunicipal>${inscricaoMunicipal}</InscricaoMunicipal>`);
+  xmlParts.push('	</Prestador>');
+  
   // Adicionar PeriodoEmissao se existir
   if (data.PeriodoEmissao) {
-    completeXml += `
-	<PeriodoEmissao>
-		<DataInicial>${safeGet(data, 'PeriodoEmissao.DataInicial', '')}</DataInicial>
-		<DataFinal>${safeGet(data, 'PeriodoEmissao.DataFinal', '')}</DataFinal>
-	</PeriodoEmissao>`;
+    const dataInicial = safeGet(data, 'PeriodoEmissao.DataInicial');
+    const dataFinal = safeGet(data, 'PeriodoEmissao.DataFinal');
+    
+    if (shouldIncludeField(dataInicial) && shouldIncludeField(dataFinal)) {
+      xmlParts.push('	<PeriodoEmissao>');
+      xmlParts.push(`		<DataInicial>${dataInicial}</DataInicial>`);
+      xmlParts.push(`		<DataFinal>${dataFinal}</DataFinal>`);
+      xmlParts.push('	</PeriodoEmissao>');
+    }
   }
 
   // Adicionar Tomador se existir
   if (data.Tomador) {
-    completeXml += `
-	<Tomador>
-		<CpfCnpj>`;
+    const tomadorCpf = safeGet(data, 'Tomador.CpfCnpj.Cpf');
+    const tomadorCnpj = safeGet(data, 'Tomador.CpfCnpj.Cnpj');
+    const tomadorInscricaoMunicipal = safeGet(data, 'Tomador.InscricaoMunicipal');
     
-    if (safeGet(data, 'Tomador.CpfCnpj.Cpf')) {
-      completeXml += `
-			<Cpf>${safeGet(data, 'Tomador.CpfCnpj.Cpf')}</Cpf>`;
-    } else if (safeGet(data, 'Tomador.CpfCnpj.Cnpj')) {
-      completeXml += `
-			<Cnpj>${safeGet(data, 'Tomador.CpfCnpj.Cnpj')}</Cnpj>`;
+    if (shouldIncludeField(tomadorCpf) || shouldIncludeField(tomadorCnpj)) {
+      xmlParts.push('	<Tomador>');
+      xmlParts.push('		<CpfCnpj>');
+      
+      if (shouldIncludeField(tomadorCpf)) {
+        xmlParts.push(`			<Cpf>${tomadorCpf}</Cpf>`);
+      } else if (shouldIncludeField(tomadorCnpj)) {
+        xmlParts.push(`			<Cnpj>${tomadorCnpj}</Cnpj>`);
+      }
+      
+      xmlParts.push('		</CpfCnpj>');
+      
+      if (shouldIncludeField(tomadorInscricaoMunicipal)) {
+        xmlParts.push(`		<InscricaoMunicipal>${tomadorInscricaoMunicipal}</InscricaoMunicipal>`);
+      }
+      
+      xmlParts.push('	</Tomador>');
     }
-    
-    completeXml += `
-		</CpfCnpj>`;
-    
-    if (safeGet(data, 'Tomador.InscricaoMunicipal')) {
-      completeXml += `
-		<InscricaoMunicipal>${safeGet(data, 'Tomador.InscricaoMunicipal')}</InscricaoMunicipal>`;
-    }
-    
-    completeXml += `
-	</Tomador>`;
   }
 
   // Adicionar IntermediarioServico se existir
   if (data.IntermediarioServico) {
-    completeXml += `
-	<IntermediarioServico>
-		<CpfCnpj>`;
+    const intermediarioCpf = safeGet(data, 'IntermediarioServico.CpfCnpj.Cpf');
+    const intermediarioCnpj = safeGet(data, 'IntermediarioServico.CpfCnpj.Cnpj');
+    const intermediarioInscricaoMunicipal = safeGet(data, 'IntermediarioServico.InscricaoMunicipal');
+    const intermediarioRazaoSocial = safeGet(data, 'IntermediarioServico.RazaoSocial');
     
-    if (safeGet(data, 'IntermediarioServico.CpfCnpj.Cpf')) {
-      completeXml += `
-			<Cpf>${safeGet(data, 'IntermediarioServico.CpfCnpj.Cpf')}</Cpf>`;
-    } else if (safeGet(data, 'IntermediarioServico.CpfCnpj.Cnpj')) {
-      completeXml += `
-			<Cnpj>${safeGet(data, 'IntermediarioServico.CpfCnpj.Cnpj')}</Cnpj>`;
+    if ((shouldIncludeField(intermediarioCpf) || shouldIncludeField(intermediarioCnpj)) && shouldIncludeField(intermediarioRazaoSocial)) {
+      xmlParts.push('	<IntermediarioServico>');
+      xmlParts.push('		<CpfCnpj>');
+      
+      if (shouldIncludeField(intermediarioCpf)) {
+        xmlParts.push(`			<Cpf>${intermediarioCpf}</Cpf>`);
+      } else if (shouldIncludeField(intermediarioCnpj)) {
+        xmlParts.push(`			<Cnpj>${intermediarioCnpj}</Cnpj>`);
+      }
+      
+      xmlParts.push('		</CpfCnpj>');
+      
+      if (shouldIncludeField(intermediarioInscricaoMunicipal)) {
+        xmlParts.push(`		<InscricaoMunicipal>${intermediarioInscricaoMunicipal}</InscricaoMunicipal>`);
+      }
+      
+      xmlParts.push(`		<RazaoSocial>${intermediarioRazaoSocial}</RazaoSocial>`);
+      xmlParts.push('	</IntermediarioServico>');
     }
-    
-    completeXml += `
-		</CpfCnpj>`;
-    
-    if (safeGet(data, 'IntermediarioServico.InscricaoMunicipal')) {
-      completeXml += `
-		<InscricaoMunicipal>${safeGet(data, 'IntermediarioServico.InscricaoMunicipal')}</InscricaoMunicipal>`;
-    }
-    
-    completeXml += `
-		<RazaoSocial>${safeGet(data, 'IntermediarioServico.RazaoSocial')}</RazaoSocial>
-	</IntermediarioServico>`;
   }
 
   // Adicionar NumeroNfse se existir
-  if (data.NumeroNfse) {
-    completeXml += `
-	<NumeroNfse>${safeGet(data, 'NumeroNfse')}</NumeroNfse>`;
+  const numeroNfse = safeGet(data, 'NumeroNfse');
+  if (shouldIncludeField(numeroNfse)) {
+    xmlParts.push(`	<NumeroNfse>${numeroNfse}</NumeroNfse>`);
   }
 
   // Fechar a tag principal
-  completeXml += `
-</ConsultarNfseEnvio>`;
+  xmlParts.push('</ConsultarNfseEnvio>');
+  
+  // Juntar todas as partes do XML
+  const completeXml = xmlParts.join('\n');
 
   // Normalizar o XML removendo indentações e quebras de linha
   const normalizedXml = completeXml

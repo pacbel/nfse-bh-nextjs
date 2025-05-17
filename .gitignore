@@ -55,7 +55,6 @@ node_stdout.log
 node_stderr.log
 # logs e notas fiscais
 /logs/
-/notas-fiscais/
 documentacao/XML_Mensagens.zip
 documentacao/XML_Mensagens/Mensagens XML/leia-me.txt
 documentacao/XML_Mensagens/Mensagens XML/1. Recepção e Processamento de Lote de RPS/Envio/instancia_servico_enviar_lote_rps_envio.xml

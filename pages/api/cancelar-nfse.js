@@ -2,17 +2,27 @@ import * as fs from "fs";
 import * as path from "path";
 import axios from "axios";
 import https from "https";
-import nfseConfig from "../../nfse.config.js";
 import { buildCancelarNfseXml } from "../../utils/xmlBuilderMetodo6";
 import { writeLog } from "./logs";
 import { nfseDataTemplateMetodo6 } from "../../utils/nfseDataTemplateMetodo6";
 import { createSoapEnvelopeMetodo6 } from "../../utils/soapBuilderMetodos";
 import { assinarXmlNfsePbh } from "../../utils/assinador";
+import { validateXsdGlobal } from "../../utils/validateXsdGlobal";
 
-// Paru00e2metros do arquivo de configurau00e7u00e3o
+// Paru00e2metros de configurau00e7u00e3o das variu00e1veis de ambiente
 const BHISS_URLS = {
-  1: process.env.API_URL_PRDUCTION, // Produu00e7u00e3o
+  1: process.env.API_URL_PRODUCTION, // Produu00e7u00e3o
   2: process.env.API_URL // Homologau00e7u00e3o
+};
+
+// Headers SOAP
+const SOAP_HEADERS = {
+  'Content-Type': process.env.CONTENT_TYPE || 'text/xml;charset=UTF-8',
+  'SOAPAction': process.env.SOAP_ACTION + 'CancelarNfse',
+  'Accept': process.env.ACCEPT || 'text/xml, application/xml',
+  'User-Agent': process.env.USER_AGENT || 'Apache-HttpClient/4.5.5 (Java/1.8.0_144)',
+  'Connection': 'close',
+  'Cache-Control': 'no-cache'
 };
 
 export default async function handler(req, res) {
@@ -23,22 +33,6 @@ export default async function handler(req, res) {
     writeLog(message);
     logs.push(message);
   };
-
-  // 1. Validar e preparar o diretu00f3rio para os XMLs
-  const notasFiscaisDir = path.resolve("notas-fiscais");
-  if (!fs.existsSync(notasFiscaisDir)) {
-    fs.mkdirSync(notasFiscaisDir, { recursive: true });
-  }
-
-  const cancelamentosDir = path.resolve("notas-fiscais", "cancelamentos");
-  if (!fs.existsSync(cancelamentosDir)) {
-    fs.mkdirSync(cancelamentosDir, { recursive: true });
-  }
-
-  const assinadasDir = path.resolve("notas-fiscais", "assinadas");
-  if (!fs.existsSync(assinadasDir)) {
-    fs.mkdirSync(assinadasDir, { recursive: true });
-  }
 
   // Preparar os dados para o cancelamento
   const cancelamentoData = {
@@ -51,22 +45,64 @@ export default async function handler(req, res) {
   const xml = buildCancelarNfseXml(cancelamentoData);
   addLog('[DEBUG] XML gerado:');
   if (!xml || xml.trim().length === 0) {
-    addLog('[ERRO] XML gerado estu00e1 vazio!');
+    addLog('[ERRO] XML gerado está vazio!');
   }
   const timestamp = new Date().toISOString().replace(/:/g, '-');
   const numeroNfse = cancelamentoData.Pedido?.InfPedidoCancelamento?.IdentificacaoNfse?.Numero || "numero";
   const saveXML01 = path.join(cancelamentosDir, `cancelamento_nfse_${numeroNfse}_${timestamp}.xml`);
   await fs.promises.writeFile(saveXML01, xml, 'utf8');
-  addLog("   u2713 XML gerado com sucesso");
+  addLog("   ✓ XML gerado com sucesso");
+
+  // Validação do XML contra o schema XSD
+  addLog("Validando XML sem assinatura contra o schema XSD...");
+  const validationResult = await validateXsdGlobal({
+    xmlContent: xml,
+    addLog,
+    xsdSchemaPath: process.env.XSD_SCHEMA_PATH
+  });
+
+  if (!validationResult.success) {
+    addLog("Erro de validação do XML:");
+    addLog(`Detalhes do erro: ${JSON.stringify(validationResult.detalhes, null, 2)}`);
+    return res.status(400).json({
+      success: false,
+      message: "Erro na validação do XML",
+      logs,
+      error: "Erro na validação do XML",
+      details: validationResult.detalhes,
+    });
+  }
+  addLog("   ✓ XML sem assinatura validado com sucesso");
 
   // Assinar o XML
   addLog("Assinando XML...");
-  const certificadoPath = path.resolve("certs", "05065736000161", "336724062546f53e.pfx");
-  const certificadoSenha = "Camgfv!@#2024";
+  const certificadoPath = path.resolve(process.env.CERT_PATH || "certs/05065736000161/cert.pfx");
+  const certificadoSenha = process.env.CERT_PASSWORD;
   const xmlSigned = assinarXmlNfsePbh(xml, certificadoPath, certificadoSenha);
   const saveXML02 = path.join(assinadasDir, `cancelamento_nfse_assinado_${numeroNfse}_${timestamp}.xml`);
   await fs.promises.writeFile(saveXML02, xmlSigned, 'utf8');
-  addLog("   u2713 XML assinado com sucesso");
+  addLog("   ✓ XML assinado com sucesso");
+
+  // Validação do XML assinado contra o schema XSD
+  addLog("Validando XML assinado contra o schema XSD...");
+  const validationSignedResult = await validateXsdGlobal({
+    xmlContent: xmlSigned,
+    addLog,
+    xsdSchemaPath: process.env.XSD_SCHEMA_PATH
+  });
+
+  if (!validationSignedResult.success) {
+    addLog("Erro de validação do XML assinado:");
+    addLog(`Detalhes do erro: ${JSON.stringify(validationSignedResult.detalhes, null, 2)}`);
+    return res.status(400).json({
+      success: false,
+      message: "Erro na validação do XML assinado",
+      logs,
+      error: "Erro na validação do XML assinado",
+      details: validationSignedResult.detalhes,
+    });
+  }
+  addLog("   ✓ XML assinado validado com sucesso");
 
   // Criar envelope SOAP
   addLog("Envelopando XML...");
@@ -81,36 +117,30 @@ export default async function handler(req, res) {
   
   console.log(requestUrl);
   
-  // Configurau00e7u00e3o do agente HTTPS
+  // Configuração do agente HTTPS
   const agent = new https.Agent({
     rejectUnauthorized: true,
     keepAlive: false,
     timeout: 180000,
-    cert: fs.existsSync(nfseConfig.certificado.cert)
-      ? fs.readFileSync(nfseConfig.certificado.cert)
+    cert: fs.existsSync(process.env.CERT_CRT_PATH)
+      ? fs.readFileSync(process.env.CERT_CRT_PATH)
       : undefined,
-    key: fs.existsSync(nfseConfig.certificado.key)
-      ? fs.readFileSync(nfseConfig.certificado.key)
-      : undefined,
-    ca: fs.existsSync(nfseConfig.certificado.ca)
-      ? fs.readFileSync(nfseConfig.certificado.ca)
-      : undefined,
+    key: fs.existsSync(process.env.CERT_KEY_PATH)
+      ? fs.readFileSync(process.env.CERT_KEY_PATH)
+      : undefined
   });
 
   // Chamada HTTP direta para a Prefeitura
   const axiosConfig = {
     method: "post",
-    url: "https://bhisshomologaws.pbh.gov.br/bhiss-ws/nfse",
+    url: requestUrl,
     data: soapEnvelope,
-    headers: {
-      "Content-Type": "text/xml;charset=UTF-8",
-      SOAPAction: nfseConfig.headers.SOAPAction + "CancelarNfse",
-    },
+    headers: SOAP_HEADERS,
     httpsAgent: agent,
     maxRedirects: 0,
     timeout: 180000,
     validateStatus: (status) => status < 600,
-    // Configurau00e7u00f5es adicionais para melhor tratamento de erros
+    // Configurações adicionais para melhor tratamento de erros
     proxy: false, // Desabilita proxy para evitar problemas de DNS
     retry: 3, // Tenta 3 vezes em caso de erro
     retryDelay: 1000 // Espera 1 segundo entre tentativas

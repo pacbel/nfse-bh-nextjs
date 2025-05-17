@@ -3,11 +3,11 @@
 export const nfseDataTemplateMetodo6 = {
   Pedido: {
     InfPedidoCancelamento: {
-      Id: 'pedidoCancelamento_05065736000161017338900142025000000000001',
+      Id: 'pedidoCancelamento_234567890001231234567890120250000000123',
       IdentificacaoNfse: {
-        Numero: '202500000000001', // Substitua pelo número real da NFS-e
-        Cnpj: '05065736000161',
-        InscricaoMunicipal: '01733890014',
+        Numero: '202500000000123', // Número fictício da NFS-e
+        Cnpj: '23456789000123',
+        InscricaoMunicipal: '12345678901',
         CodigoMunicipio: '3106200'
       },
       CodigoCancelamento: '2' // Código 2: Serviço não prestado

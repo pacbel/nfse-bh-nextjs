@@ -2,16 +2,26 @@ import * as fs from "fs";
 import * as path from "path";
 import axios from "axios";
 import https from "https";
-import nfseConfig from "../../nfse.config.js";
 import { buildConsultarLoteRpsXml } from "../../utils/xmlBuilderMetodo4";
 import { writeLog } from "./logs";
 import { nfseDataTemplateMetodo4 } from "../../utils/nfseDataTemplateMetodo4";
 import { createSoapEnvelopeMetodo4 } from "../../utils/soapBuilderMetodos";
+import { validateXsdGlobal } from "../../utils/validateXsdGlobal";
 
-// Parâmetros do arquivo de configuração
+// Parâmetros de configuração das variáveis de ambiente
 const BHISS_URLS = {
-  1: process.env.API_URL_PRDUCTION, // Produção
+  1: process.env.API_URL_PRODUCTION, // Produção
   2: process.env.API_URL // Homologação
+};
+
+// Headers SOAP
+const SOAP_HEADERS = {
+  'Content-Type': process.env.CONTENT_TYPE || 'text/xml;charset=UTF-8',
+  'SOAPAction': process.env.SOAP_ACTION + 'ConsultarLoteRps',
+  'Accept': process.env.ACCEPT || 'text/xml, application/xml',
+  'User-Agent': process.env.USER_AGENT || 'Apache-HttpClient/4.5.5 (Java/1.8.0_144)',
+  'Connection': 'close',
+  'Cache-Control': 'no-cache'
 };
 
 export default async function handler(req, res) {
@@ -22,17 +32,6 @@ export default async function handler(req, res) {
     writeLog(message);
     logs.push(message);
   };
-
-  // 1. Validar e preparar o diretório para os XMLs
-  const notasFiscaisDir = path.resolve("notas-fiscais");
-  if (!fs.existsSync(notasFiscaisDir)) {
-    fs.mkdirSync(notasFiscaisDir, { recursive: true });
-  }
-
-  const consultasDir = path.resolve("notas-fiscais", "consultas");
-  if (!fs.existsSync(consultasDir)) {
-    fs.mkdirSync(consultasDir, { recursive: true });
-  }
 
   // Preparar os dados para a consulta
   const consultaData = {
@@ -70,26 +69,20 @@ export default async function handler(req, res) {
     rejectUnauthorized: true,
     keepAlive: false,
     timeout: 180000,
-    cert: fs.existsSync(nfseConfig.certificado.cert)
-      ? fs.readFileSync(nfseConfig.certificado.cert)
+    cert: fs.existsSync(process.env.CERT_CRT_PATH)
+      ? fs.readFileSync(process.env.CERT_CRT_PATH)
       : undefined,
-    key: fs.existsSync(nfseConfig.certificado.key)
-      ? fs.readFileSync(nfseConfig.certificado.key)
-      : undefined,
-    ca: fs.existsSync(nfseConfig.certificado.ca)
-      ? fs.readFileSync(nfseConfig.certificado.ca)
-      : undefined,
+    key: fs.existsSync(process.env.CERT_KEY_PATH)
+      ? fs.readFileSync(process.env.CERT_KEY_PATH)
+      : undefined
   });
 
   // Chamada HTTP direta para a Prefeitura
   const axiosConfig = {
     method: "post",
-    url: "https://bhisshomologaws.pbh.gov.br/bhiss-ws/nfse",
+    url: requestUrl,
     data: soapEnvelope,
-    headers: {
-      "Content-Type": "text/xml;charset=UTF-8",
-      SOAPAction: nfseConfig.headers.SOAPAction + "ConsultarLoteRps",
-    },
+    headers: SOAP_HEADERS,
     httpsAgent: agent,
     maxRedirects: 0,
     timeout: 180000,

@@ -2,18 +2,27 @@ import * as fs from "fs";
 import * as path from "path";
 import axios from "axios";
 import https from "https";
-import nfseConfig from "../../nfse.config.js";
 import { buildNfseXml } from "../../utils/xmlBuilder";
-import { handleXmlValidation } from "../../utils/xmlValidationHandler";
 import { writeLog } from "./logs";
 import { nfseDataTemplate } from "../../utils/nfseDataTemplate";
 import { assinarXmlNfsePbh } from "../../utils/assinador";
 import { createSoapEnvelope } from "../../utils/soapBuilder";
+import { validateXsdGlobal } from "../../utils/validateXsdGlobal";
 
-// Parâmetros do arquivo de configuração
+// Parâmetros de configuração das variáveis de ambiente
 const BHISS_URLS = {
-  1: process.env.API_URL_PRDUCTION, // Produção
+  1: process.env.API_URL_PRODUCTION, // Produção
   2: process.env.API_URL // Homologação
+};
+
+// Headers SOAP
+const SOAP_HEADERS = {
+  'Content-Type': process.env.CONTENT_TYPE || 'text/xml;charset=UTF-8',
+  'SOAPAction': process.env.SOAP_ACTION + 'RecepcionarLoteRps',
+  'Accept': process.env.ACCEPT || 'text/xml, application/xml',
+  'User-Agent': process.env.USER_AGENT || 'Apache-HttpClient/4.5.5 (Java/1.8.0_144)',
+  'Connection': 'close',
+  'Cache-Control': 'no-cache'
 };
 
 export default async function handler(req, res) {
@@ -25,33 +34,6 @@ export default async function handler(req, res) {
     logs.push(message);
   };
 
-  // 1. Validar e preparar o diretório para os XMLs
-  const notasFiscaisDir = path.resolve("notas-fiscais");
-  if (!fs.existsSync(notasFiscaisDir)) {
-    fs.mkdirSync(notasFiscaisDir, { recursive: true });
-  }
-
-  const assinadasDir = path.resolve("notas-fiscais", "assinadas");
-  if (!fs.existsSync(assinadasDir)) {
-    fs.mkdirSync(assinadasDir, { recursive: true });
-  }
-
-  const originalDir = path.resolve("notas-fiscais", "original");
-  if (!fs.existsSync(originalDir)) {
-    fs.mkdirSync(originalDir, { recursive: true });
-  }
-
-  const signedDir = path.resolve("notas-fiscais", "signed");
-  if (!fs.existsSync(signedDir)) {
-    fs.mkdirSync(signedDir, { recursive: true });
-  }
-
-  const soapDir = path.resolve("notas-fiscais", "soap");
-  if (!fs.existsSync(soapDir)) {
-    fs.mkdirSync(soapDir, { recursive: true });
-  }
-
-  // FIM DO PREPARO DO DIRETORIO
 
   // 2. Gerar XML da NFS-e
   addLog("Gerando XML da NFS-e...");
@@ -65,24 +47,26 @@ export default async function handler(req, res) {
   await fs.promises.writeFile(saveXML01, xml, 'utf8');
   addLog("   ✓ XML gerado com sucesso");
 
-  // Validação do XML
-  // addLog("Validar XML sem assinatura contra o schema XSD...");
-  // const validationResult = await handleXmlValidation({
-  //   xmlContent: xml,
-  //   addLog,
-  // });
+  // Validação do XML sem assinatura contra o schema XSD
+  addLog("Validando XML sem assinatura contra o schema XSD...");
+  const validationResult = await validateXsdGlobal({
+    xmlContent: xml,
+    addLog,
+    xsdSchemaPath: process.env.XSD_SCHEMA_PATH
+  });
 
-  // if (!validationResult.success) {
-  //   addLog("Erro de validação do XML:");
-  //   addLog(`Detalhes do erro: ${JSON.stringify(validationResult.errors, null, 2)}`);
-  //   return res.status(400).json({
-  //     success: false,
-  //     message: "Erro na validação do XML",
-  //     logs,
-  //     error: "Erro na validação do XML",
-  //     details: validationResult.errors,
-  //   });
-  // }
+  if (!validationResult.success) {
+    addLog("Erro de validação do XML:");
+    addLog(`Detalhes do erro: ${JSON.stringify(validationResult.detalhes, null, 2)}`);
+    return res.status(400).json({
+      success: false,
+      message: "Erro na validação do XML",
+      logs,
+      error: "Erro na validação do XML",
+      details: validationResult.detalhes,
+    });
+  }
+  addLog("   ✓ XML sem assinatura validado com sucesso");
 
   // Assinar o XML
   addLog("Assinando XML...");
@@ -93,26 +77,26 @@ export default async function handler(req, res) {
   await fs.promises.writeFile(saveXML02, xmlSigned, 'utf8');
   addLog("   ✓ XML assinado com sucesso");
 
-  // // Validação do XML
-  // addLog("Validar XML sem assinatura contra o schema XSD...");
-  // const validationSignedResult = await handleXmlValidation({
-  //   xmlContent: xmlSigned,
-  //   addLog,
-  // });
+  // Validação do XML assinado contra o schema XSD
+  addLog("Validando XML assinado contra o schema XSD...");
+  const validationSignedResult = await validateXsdGlobal({
+    xmlContent: xmlSigned,
+    addLog,
+    xsdSchemaPath: process.env.XSD_SCHEMA_PATH
+  });
 
-  // addLog(xmlSigned);
-  
-  // if (!validationSignedResult.success) {
-  //   addLog("Erro de validação do XML:");
-  //   addLog(`Detalhes do erro: ${JSON.stringify(validationSignedResult.errors, null, 2)}`);
-  //   return res.status(400).json({
-  //     success: false,
-  //     message: "Erro na validação do XML",
-  //     logs,
-  //     error: "Erro na validação do XML",
-  //     details: validationSignedResult.errors,
-  //   });
-  // }
+  if (!validationSignedResult.success) {
+    addLog("Erro de validação do XML assinado:");
+    addLog(`Detalhes do erro: ${JSON.stringify(validationSignedResult.detalhes, null, 2)}`);
+    return res.status(400).json({
+      success: false,
+      message: "Erro na validação do XML assinado",
+      logs,
+      error: "Erro na validação do XML assinado",
+      details: validationSignedResult.detalhes,
+    });
+  }
+  addLog("   ✓ XML assinado validado com sucesso");
 
   // Criar envelope SOAP
   addLog("Envelopando XML...");
@@ -132,26 +116,20 @@ export default async function handler(req, res) {
     rejectUnauthorized: true,
     keepAlive: false,
     timeout: 180000,
-    cert: fs.existsSync(nfseConfig.certificado.cert)
-      ? fs.readFileSync(nfseConfig.certificado.cert)
+    cert: fs.existsSync(process.env.CERT_CRT_PATH)
+      ? fs.readFileSync(process.env.CERT_CRT_PATH)
       : undefined,
-    key: fs.existsSync(nfseConfig.certificado.key)
-      ? fs.readFileSync(nfseConfig.certificado.key)
-      : undefined,
-    ca: fs.existsSync(nfseConfig.certificado.ca)
-      ? fs.readFileSync(nfseConfig.certificado.ca)
-      : undefined,
+    key: fs.existsSync(process.env.CERT_KEY_PATH)
+      ? fs.readFileSync(process.env.CERT_KEY_PATH)
+      : undefined
   });
 
   // Chamada HTTP direta para a Prefeitura
   const axiosConfig = {
     method: "post",
-    url: "https://bhisshomologaws.pbh.gov.br/bhiss-ws/nfse",
+    url: requestUrl,
     data: soapEnvelope,
-    headers: {
-      "Content-Type": "text/xml;charset=UTF-8",
-      SOAPAction: nfseConfig.headers.SOAPAction + "RecepcionarLoteRps",
-    },
+    headers: SOAP_HEADERS,
     httpsAgent: agent,
     maxRedirects: 0,
     timeout: 180000,

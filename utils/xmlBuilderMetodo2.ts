@@ -8,7 +8,7 @@ export function buildConsultarSituacaoLoteRpsXml(data: ConsultarSituacaoLoteRpsE
   }
 
   // Funções auxiliares para acessar propriedades de forma segura
-  const safeGet = (obj: any, path: string, defaultValue: string = ''): string => {
+  const safeGet = (obj: any, path: string, defaultValue?: string): string | undefined => {
     const parts = path.split('.');
     let current = obj;
 
@@ -19,18 +19,49 @@ export function buildConsultarSituacaoLoteRpsXml(data: ConsultarSituacaoLoteRpsE
       current = current[part];
     }
 
-    return current !== undefined && current !== null ? current : defaultValue;
+    // Retorna undefined para valores vazios, hífen ou apenas espaços
+    if (
+      current === undefined || 
+      current === null || 
+      current === '-' || 
+      (typeof current === 'string' && (current.trim() === '' || current.trim() === '-'))
+    ) {
+      return defaultValue;
+    }
+
+    return current;
+  };
+
+  // Função para verificar se um valor existe e deve ser incluído no XML
+  const shouldIncludeField = (value: any): boolean => {
+    return value !== undefined && value !== null && value !== '';
   };
 
   // Construir o XML completo
-  const completeXml = `<?xml version="1.0" encoding="UTF-8"?>
-<ConsultarSituacaoLoteRpsEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">
-	<Prestador>
-		<Cnpj>${safeGet(data, 'Prestador.Cnpj', '05065736000161')}</Cnpj>
-		<InscricaoMunicipal>${safeGet(data, 'Prestador.InscricaoMunicipal', '01733890014')}</InscricaoMunicipal>
-	</Prestador>
-	<Protocolo>${safeGet(data, 'Protocolo', '')}</Protocolo>
-</ConsultarSituacaoLoteRpsEnvio>`;
+  const xmlParts: string[] = [];
+  
+  // Iniciar o XML
+  xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>');
+  xmlParts.push('<ConsultarSituacaoLoteRpsEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">');
+  
+  // Prestador (obrigatório)
+  xmlParts.push('	<Prestador>');
+  const cnpj = safeGet(data, 'Prestador.Cnpj');
+  xmlParts.push(`		<Cnpj>${cnpj}</Cnpj>`);
+  
+  const inscricaoMunicipal = safeGet(data, 'Prestador.InscricaoMunicipal');
+  xmlParts.push(`		<InscricaoMunicipal>${inscricaoMunicipal}</InscricaoMunicipal>`);
+  xmlParts.push('	</Prestador>');
+  
+  // Protocolo (obrigatório)
+  const protocolo = safeGet(data, 'Protocolo');
+  xmlParts.push(`	<Protocolo>${protocolo}</Protocolo>`);
+  
+  // Fechar a tag principal
+  xmlParts.push('</ConsultarSituacaoLoteRpsEnvio>');
+  
+  // Juntar todas as partes do XML
+  const completeXml = xmlParts.join('\n');
 
   // Normalizar o XML removendo indentações e quebras de linha
   const normalizedXml = completeXml

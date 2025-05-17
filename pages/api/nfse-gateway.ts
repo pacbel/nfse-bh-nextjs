@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { NfseApiRequest, NfseApiResponse } from '../../types/nfse-bh';
 import { ISignatureResult } from '../../types/xmlSigner';
-import nfseConfig from "../../nfse.config.js";
 
 import * as fs from "fs";
 import * as path from "path";
@@ -9,15 +8,10 @@ import axios from "axios";
 import https from "https";
 import { buildNfseXml } from '../../utils/xmlBuilder';
 import { createSoapEnvelope } from '../../utils/soapBuilder';
+import { validateXsdGlobal } from '../../utils/validateXsdGlobal';
 
 // Token secreto para autenticação (deve ser configurado em variáveis de ambiente)
 const API_TOKEN = process.env.API_TOKEN || '123456';
-
-const notasFiscaisDir = path.resolve("notas-fiscais");
-if (!fs.existsSync(notasFiscaisDir)) {
-  fs.mkdirSync(notasFiscaisDir, { recursive: true });
-}
-
 
 // URLs dos ambientes
 const URLS = {
@@ -91,15 +85,8 @@ export default async function handler(
     // Gera o XML da NFSe
     const requestXml = buildNfseXml(nfseData);
 
-    // Salva o XML original para debug
+    // Gera um timestamp para identificar os arquivos
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const xmlOriginalPath = path.join(
-      notasFiscaisDir,
-      "original",
-      `nfse_original_${nfseData.LoteRps?.NumeroLote || 'sem-lote'}_${timestamp}.xml`
-    );
-    fs.mkdirSync(path.dirname(xmlOriginalPath), { recursive: true });
-    fs.writeFileSync(xmlOriginalPath, requestXml);
 
     // Assinar o XML com múltiplas assinaturas
     // signedXmlResult = await signMultipleElements(requestXml, [
@@ -110,26 +97,24 @@ export default async function handler(
     //   keyPath: keyPath
     // });
 
-    // Salva o XML assinado para debug
-    const xmlSignedPath = path.join(
-      notasFiscaisDir,
-      "signed",
-      `nfse_signed_${nfseData.LoteRps?.NumeroLote || 'sem-lote'}_${timestamp}.xml`
-    );
-    fs.mkdirSync(path.dirname(xmlSignedPath), { recursive: true });
-    fs.writeFileSync(xmlSignedPath, signedXmlResult.signedXml);
+    // XML assinado para debug (comentado para evitar erros)
+    // const xmlSignedPath = path.join(
+    //   process.cwd(), 'debug', 'signed',
+    //   `nfse_signed_${nfseData.LoteRps?.NumeroLote || 'sem-lote'}_${timestamp}.xml`
+    // );
+    // fs.mkdirSync(path.dirname(xmlSignedPath), { recursive: true });
+    // fs.writeFileSync(xmlSignedPath, signedXmlResult.signedXml);
 
     // Cria o envelope SOAP com o XML original
     const xmlSoap = createSoapEnvelope(requestXml);
 
-    // Salva o envelope SOAP para debug
-    const xmlSoapPath = path.join(
-      notasFiscaisDir,
-      "soap",
-      `nfse_soap_${nfseData.LoteRps?.NumeroLote || 'sem-lote'}_${timestamp}.xml`
-    );
-    fs.mkdirSync(path.dirname(xmlSoapPath), { recursive: true });
-    fs.writeFileSync(xmlSoapPath, xmlSoap);
+    // Envelope SOAP para debug (comentado para evitar erros)
+    // const xmlSoapPath = path.join(
+    //   process.cwd(), 'debug', 'soap',
+    //   `nfse_soap_${nfseData.LoteRps?.NumeroLote || 'sem-lote'}_${timestamp}.xml`
+    // );
+    // fs.mkdirSync(path.dirname(xmlSoapPath), { recursive: true });
+    // fs.writeFileSync(xmlSoapPath, xmlSoap);
 
     // Configuração do agente HTTPS
     const agent = new https.Agent({
@@ -145,14 +130,21 @@ export default async function handler(
     });
     // Já temos certPath e keyPath definidos acima
 
+    // Headers SOAP
+    const SOAP_HEADERS = {
+      'Content-Type': process.env.CONTENT_TYPE || 'text/xml;charset=UTF-8',
+      'SOAPAction': (process.env.SOAP_ACTION || 'http://ws.bhiss.pbh.gov.br/') + 'RecepcionarLoteRps',
+      'Accept': process.env.ACCEPT || 'text/xml, application/xml',
+      'User-Agent': process.env.USER_AGENT || 'Apache-HttpClient/4.5.5 (Java/1.8.0_144)',
+      'Connection': 'close',
+      'Cache-Control': 'no-cache'
+    };
+
     const axiosConfig = {
       method: "post",
       url: URLS[ambiente],
       data: xmlSoap,
-      headers: {
-        "Content-Type": "text/xml;charset=UTF-8",
-        SOAPAction: nfseConfig.headers.SOAPAction + "RecepcionarLoteRps",
-      },
+      headers: SOAP_HEADERS,
       httpsAgent: agent,
       maxRedirects: 0,
       timeout: 180000,

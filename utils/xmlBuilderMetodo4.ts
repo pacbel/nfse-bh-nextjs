@@ -2,13 +2,13 @@ import { ConsultarLoteRpsEnvio } from '../types/nfse-metodos';
 import { DOMParser } from 'xmldom';
 
 export function buildConsultarLoteRpsXml(data: ConsultarLoteRpsEnvio): string {
-  // Garantir que temos um objeto vu00e1lido
+  // Garantir que temos um objeto válido
   if (!data || !data.Prestador || !data.Protocolo) {
-    throw new Error('Dados invu00e1lidos: Prestador e Protocolo su00e3o obrigatu00f3rios');
+    throw new Error('Dados inválidos: Prestador e Protocolo são obrigatórios');
   }
 
-  // Funu00e7u00f5es auxiliares para acessar propriedades de forma segura
-  const safeGet = (obj: any, path: string, defaultValue: string = ''): string => {
+  // Funções auxiliares para acessar propriedades de forma segura
+  const safeGet = (obj: any, path: string, defaultValue?: string): string | undefined => {
     const parts = path.split('.');
     let current = obj;
 
@@ -19,18 +19,49 @@ export function buildConsultarLoteRpsXml(data: ConsultarLoteRpsEnvio): string {
       current = current[part];
     }
 
-    return current !== undefined && current !== null ? current : defaultValue;
+    // Retorna undefined para valores vazios, hífen ou apenas espaços
+    if (
+      current === undefined || 
+      current === null || 
+      current === '-' || 
+      (typeof current === 'string' && (current.trim() === '' || current.trim() === '-'))
+    ) {
+      return defaultValue;
+    }
+
+    return current;
+  };
+
+  // Função para verificar se um valor existe e deve ser incluído no XML
+  const shouldIncludeField = (value: any): boolean => {
+    return value !== undefined && value !== null && value !== '';
   };
 
   // Construir o XML completo
-  const completeXml = `<?xml version="1.0" encoding="UTF-8"?>
-<ConsultarLoteRpsEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">
-	<Prestador>
-		<Cnpj>${safeGet(data, 'Prestador.Cnpj', '05065736000161')}</Cnpj>
-		<InscricaoMunicipal>${safeGet(data, 'Prestador.InscricaoMunicipal', '01733890014')}</InscricaoMunicipal>
-	</Prestador>
-	<Protocolo>${safeGet(data, 'Protocolo', '')}</Protocolo>
-</ConsultarLoteRpsEnvio>`;
+  const xmlParts: string[] = [];
+  
+  // Iniciar o XML
+  xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>');
+  xmlParts.push('<ConsultarLoteRpsEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">');
+  
+  // Prestador (obrigatório)
+  xmlParts.push('	<Prestador>');
+  const cnpj = safeGet(data, 'Prestador.Cnpj');
+  xmlParts.push(`		<Cnpj>${cnpj}</Cnpj>`);
+  
+  const inscricaoMunicipal = safeGet(data, 'Prestador.InscricaoMunicipal');
+  xmlParts.push(`		<InscricaoMunicipal>${inscricaoMunicipal}</InscricaoMunicipal>`);
+  xmlParts.push('	</Prestador>');
+  
+  // Protocolo (obrigatório)
+  const protocolo = safeGet(data, 'Protocolo');
+  xmlParts.push(`	<Protocolo>${protocolo}</Protocolo>`);
+  
+  // Fechar a tag principal
+  xmlParts.push('</ConsultarLoteRpsEnvio>');
+  
+  // Juntar todas as partes do XML
+  const completeXml = xmlParts.join('\n');
 
   // Normalizar o XML removendo indentau00e7u00f5es e quebras de linha
   const normalizedXml = completeXml

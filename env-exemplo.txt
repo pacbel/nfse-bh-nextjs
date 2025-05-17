@@ -1,21 +1,24 @@
 # Configurações da API
 API_URL=https://bhisshomologaws.pbh.gov.br/bhiss-ws/nfse
+API_URL_PRODUCTION=https://bhissdigitalws.pbh.gov.br/bhiss-ws/nfse
+
+# Configurações TLS
+TLS_MIN_VERSION=TLSv1
+TLS_MAX_VERSION=TLSv1.2
+TLS_CIPHERS=ECDHE-RSA-AES256-SHA:AES256-SHA:ECDHE-RSA-AES128-SHA:AES128-SHA:DES-CBC3-SHA
+
+# Headers SOAP
+SOAP_ACTION=http://ws.bhiss.pbh.gov.br/
+CONTENT_TYPE=text/xml;charset=UTF-8
+ACCEPT=text/xml, application/xml
+USER_AGENT=Apache-HttpClient/4.5.5 (Java/1.8.0_144)
 
 # Caminho para o certificado digital
-CERT_PATH=./certs/05065736000161/cert.pfx
-CERT_PASSWORD=Senha123@Ficticia
+CERT_PATH=./certs/CNPJ_EMPRESA/cert.pfx
+CERT_PASSWORD=SenhaDoSeuCertificado
+CERT_CRT_PATH=./certs/CNPJ_EMPRESA/certificate.crt
+CERT_KEY_PATH=./certs/CNPJ_EMPRESA/certificate.key
 
-# Dados do Prestador (dados fictícios)
-PRESTADOR_CNPJ=05065736000161
-PRESTADOR_INSCRICAO_MUNICIPAL=01733890014
-PRESTADOR_RAZAO_SOCIAL=EMPRESA FICTICIA LTDA
-PRESTADOR_NOME_FANTASIA=EMPRESA VIRTUAL
-PRESTADOR_ENDERECO=AVENIDA IMAGINARIA
-PRESTADOR_NUMERO=1234
-PRESTADOR_COMPLEMENTO=SALA 101
-PRESTADOR_BAIRRO=CENTRO
-PRESTADOR_CODIGO_MUNICIPIO=3106200
-PRESTADOR_UF=MG
-PRESTADOR_CEP=30000000
-PRESTADOR_TELEFONE=3199999999
-PRESTADOR_EMAIL=contato@empresaficticia.com.br
+# Caminhos para schemas XSD
+XSD_SCHEMA_PATH=./documentacao/nfse_schemas10/nfse.xsd
+XSD_SIGNATURE_PATH=./documentacao/nfse_schemas10/xmldsig-core-schema20020212.xsd

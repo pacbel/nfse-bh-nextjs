@@ -38,7 +38,7 @@ export function buildNfseXml(data: EnviarLoteRpsEnvio): string {
   }
 
   // Funções auxiliares para acessar propriedades de forma segura
-  const safeGet = (obj: any, path: string, defaultValue: string = ''): string => {
+  const safeGet = (obj: any, path: string, defaultValue?: string): string | undefined => {
     const parts = path.split('.');
     let current = obj;
 
@@ -49,115 +49,312 @@ export function buildNfseXml(data: EnviarLoteRpsEnvio): string {
       current = current[part];
     }
 
-    // Se o valor for apenas hífen ou espaços, retorna undefined para que o campo seja omitido
-    if (current === '-' || (typeof current === 'string' && current.trim() === '-')) {
-      return undefined;
+    // Retorna undefined para valores vazios, hífen ou apenas espaços
+    if (
+      current === undefined || 
+      current === null || 
+      current === '-' || 
+      (typeof current === 'string' && (current.trim() === '' || current.trim() === '-'))
+    ) {
+      return defaultValue;
     }
 
-    return current !== undefined && current !== null ? current : defaultValue;
+    return current;
   };
 
-  const safeGetWithCheck = (obj: any, path: string, checkPath: string, defaultValue: string = ''): string => {
-    const checkParts = checkPath.split('.');
-    let checkCurrent = obj;
-
-    for (const part of checkParts) {
-      if (checkCurrent === undefined || checkCurrent === null) {
-        return '';
-      }
-      checkCurrent = checkCurrent[part];
-    }
-
-    if (checkCurrent) {
-      return safeGet(obj, path, defaultValue);
-    }
-
-    return '';
+  // Função para verificar se um valor existe e deve ser incluído no XML
+  const shouldIncludeField = (value: any): boolean => {
+    return value !== undefined && value !== null && value !== '';
   };
 
   // Construir o XML interno primeiro (conteúdo do envelope SOAP)
   // Construir o XML completo primeiro (sem envelope SOAP)
-  const completeXml = `<?xml version="1.0" encoding="UTF-8"?>
-<EnviarLoteRpsEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">
-<LoteRps Id="lote" versao="${safeGet(LoteRps, 'versao', '1.00')}">
-<NumeroLote>${safeGet(LoteRps, 'NumeroLote', '1')}</NumeroLote>
-<Cnpj>${safeGet(LoteRps, 'Cnpj', '05065736000161')}</Cnpj>
-<InscricaoMunicipal>${safeGet(LoteRps, 'InscricaoMunicipal', '01733890014')}</InscricaoMunicipal>
-<QuantidadeRps>${safeGet(LoteRps, 'QuantidadeRps', '1')}</QuantidadeRps>
-<ListaRps>
-<Rps>
-<InfRps Id="${safeGet(InfRps.IdentificacaoRps.Numero, 'InfRps', 'rps:15HOMOL')}">
-<IdentificacaoRps>
-<Numero>${safeGet(InfRps, 'IdentificacaoRps.Numero', '1')}</Numero>
-<Serie>${safeGet(InfRps, 'IdentificacaoRps.Serie', '1')}</Serie>
-<Tipo>${safeGet(InfRps, 'IdentificacaoRps.Tipo', '1')}</Tipo>
-</IdentificacaoRps>
-<DataEmissao>${safeGet(InfRps, 'DataEmissao', new Date().toISOString().split('T')[0])}</DataEmissao>
-<NaturezaOperacao>${safeGet(InfRps, 'NaturezaOperacao', '1')}</NaturezaOperacao>
-<RegimeEspecialTributacao>6</RegimeEspecialTributacao>
-<OptanteSimplesNacional>1</OptanteSimplesNacional>
-<IncentivadorCultural>${safeGet(InfRps, 'IncentivadorCultural', '2')}</IncentivadorCultural>
-<Status>${safeGet(InfRps, 'Status', '1')}</Status>
-<Servico>
-<Valores>
-<ValorServicos>${safeGet(InfRps, 'Servico.Valores.ValorServicos', '0')}</ValorServicos>
-<ValorDeducoes>${safeGet(InfRps, 'Servico.Valores.ValorDeducoes', '0')}</ValorDeducoes>
-<ValorPis>${safeGet(InfRps, 'Servico.Valores.ValorPis', '0')}</ValorPis>
-<ValorCofins>${safeGet(InfRps, 'Servico.Valores.ValorCofins', '0')}</ValorCofins>
-<ValorInss>${safeGet(InfRps, 'Servico.Valores.ValorInss', '0')}</ValorInss>
-<ValorIr>${safeGet(InfRps, 'Servico.Valores.ValorIr', '0')}</ValorIr>
-<ValorCsll>${safeGet(InfRps, 'Servico.Valores.ValorCsll', '0')}</ValorCsll>
-<IssRetido>${safeGet(InfRps, 'Servico.Valores.IssRetido', '2')}</IssRetido>
-<ValorIss>${(parseFloat(safeGet(InfRps, 'Servico.Valores.ValorServicos', '0')) * 0.025).toFixed(2)}</ValorIss>
-<ValorIssRetido>${safeGet(InfRps, 'Servico.Valores.ValorIssRetido', '0')}</ValorIssRetido>
-<OutrasRetencoes>${safeGet(InfRps, 'Servico.Valores.OutrasRetencoes', '0')}</OutrasRetencoes>
-<BaseCalculo>${safeGet(InfRps, 'Servico.Valores.BaseCalculo', '0')}</BaseCalculo>
-<Aliquota>0.025</Aliquota>
-<ValorLiquidoNfse>${safeGet(InfRps, 'Servico.Valores.ValorLiquidoNfse', '0')}</ValorLiquidoNfse>
-<DescontoIncondicionado>${safeGet(InfRps, 'Servico.Valores.DescontoIncondicionado', '0')}</DescontoIncondicionado>
-<DescontoCondicionado>${safeGet(InfRps, 'Servico.Valores.DescontoCondicionado', '0')}</DescontoCondicionado>
-</Valores>
-<ItemListaServico>${safeGet(InfRps, 'Servico.ItemListaServico', '')}</ItemListaServico>
-<CodigoTributacaoMunicipio>${safeGet(InfRps, 'Servico.CodigoTributacaoMunicipio', '')}</CodigoTributacaoMunicipio>
-<Discriminacao>${safeGet(InfRps, 'Servico.Discriminacao', '')}</Discriminacao>
-<CodigoMunicipio>${safeGet(InfRps, 'Servico.CodigoMunicipio', '3106200')}</CodigoMunicipio>
-</Servico>
-<Prestador>
-<Cnpj>${safeGet(InfRps, 'Prestador.CpfCnpj.Cnpj', '05065736000161')}</Cnpj>
-<InscricaoMunicipal>${safeGet(InfRps, 'Prestador.InscricaoMunicipal', '01733890014')}</InscricaoMunicipal>
-</Prestador>
-<Tomador>
-<IdentificacaoTomador>
-<CpfCnpj>
-${safeGet(InfRps, 'Tomador.IdentificacaoTomador.CpfCnpj.Cpf') ?
-      `<Cpf>${safeGet(InfRps, 'Tomador.IdentificacaoTomador.CpfCnpj.Cpf')}</Cpf>` :
-      `<Cnpj>${safeGet(InfRps, 'Tomador.IdentificacaoTomador.CpfCnpj.Cnpj')}</Cnpj>`}
-</CpfCnpj>
-</IdentificacaoTomador>
-<RazaoSocial>${safeGet(InfRps, 'Tomador.RazaoSocial', '')}</RazaoSocial>
-<Endereco>
-${[
-      `<Endereco>${safeGet(InfRps, 'Tomador.Endereco.Logradouro') || safeGet(InfRps, 'Tomador.Endereco.Endereco', '')}</Endereco>`,
-      `<Numero>${safeGet(InfRps, 'Tomador.Endereco.Numero', '')}</Numero>`,
-      safeGet(InfRps, 'Tomador.Endereco.Complemento') ? `<Complemento>${safeGet(InfRps, 'Tomador.Endereco.Complemento')}</Complemento>` : null,
-      `<Bairro>${safeGet(InfRps, 'Tomador.Endereco.Bairro', '')}</Bairro>`,
-      `<CodigoMunicipio>${safeGet(InfRps, 'Tomador.Endereco.CodigoMunicipio', '3106200')}</CodigoMunicipio>`,
-      `<Uf>${safeGet(InfRps, 'Tomador.Endereco.Uf', 'MG')}</Uf>`,
-      `<Cep>${safeGet(InfRps, 'Tomador.Endereco.Cep', '')}</Cep>`
-    ].filter(Boolean).join('\n')}
-</Endereco>
-<Contato>
-${[
-      safeGet(InfRps, 'Tomador.Contato.Telefone') ? `<Telefone>${formatarTelefone(safeGet(InfRps, 'Tomador.Contato.Telefone'))}</Telefone>` : null,
-      `<Email>${safeGet(InfRps, 'Tomador.Contato.Email', '')}</Email>`
-    ].filter(Boolean).join('\n')}
-</Contato>
-</Tomador>
-</InfRps>
-</Rps>
-</ListaRps>
-</LoteRps>
-</EnviarLoteRpsEnvio>`;
+  let xmlParts = [];
+  
+  // Iniciar o XML
+  xmlParts.push('<?xml version="1.0" encoding="UTF-8"?>');
+  xmlParts.push('<EnviarLoteRpsEnvio xmlns="http://www.abrasf.org.br/nfse.xsd">');
+  
+  // LoteRps
+  const versao = safeGet(LoteRps, 'versao') || '1.00';
+  xmlParts.push(`<LoteRps Id="lote" versao="${versao}">`);
+  
+  // Campos obrigatórios do LoteRps
+  const numeroLote = safeGet(LoteRps, 'NumeroLote');
+  xmlParts.push(`<NumeroLote>${numeroLote}</NumeroLote>`);
+  
+  const cnpj = safeGet(LoteRps, 'Cnpj');
+  xmlParts.push(`<Cnpj>${cnpj}</Cnpj>`);
+  
+  const inscricaoMunicipal = safeGet(LoteRps, 'InscricaoMunicipal');
+  xmlParts.push(`<InscricaoMunicipal>${inscricaoMunicipal}</InscricaoMunicipal>`);
+  
+  const quantidadeRps = safeGet(LoteRps, 'QuantidadeRps') || '1';
+  xmlParts.push(`<QuantidadeRps>${quantidadeRps}</QuantidadeRps>`);
+  
+  // ListaRps
+  xmlParts.push('<ListaRps>');
+  xmlParts.push('<Rps>');
+  
+  // InfRps
+  const idRps = `rps:${InfRps.IdentificacaoRps.Numero}`;
+  xmlParts.push(`<InfRps Id="${idRps}">`);
+  
+  // IdentificacaoRps
+  xmlParts.push('<IdentificacaoRps>');
+  const numeroRps = safeGet(InfRps, 'IdentificacaoRps.Numero');
+  xmlParts.push(`<Numero>${numeroRps}</Numero>`);
+  
+  const serieRps = safeGet(InfRps, 'IdentificacaoRps.Serie');
+  xmlParts.push(`<Serie>${serieRps}</Serie>`);
+  
+  const tipoRps = safeGet(InfRps, 'IdentificacaoRps.Tipo') || '1';
+  xmlParts.push(`<Tipo>${tipoRps}</Tipo>`);
+  xmlParts.push('</IdentificacaoRps>');
+  
+  // DataEmissao
+  const dataEmissao = safeGet(InfRps, 'DataEmissao');
+  xmlParts.push(`<DataEmissao>${dataEmissao}</DataEmissao>`);
+  
+  // NaturezaOperacao
+  const naturezaOperacao = safeGet(InfRps, 'NaturezaOperacao') || '1';
+  xmlParts.push(`<NaturezaOperacao>${naturezaOperacao}</NaturezaOperacao>`);
+  
+  // RegimeEspecialTributacao (opcional)
+  const regimeEspecialTributacao = safeGet(InfRps, 'RegimeEspecialTributacao');
+  if (shouldIncludeField(regimeEspecialTributacao)) {
+    xmlParts.push(`<RegimeEspecialTributacao>${regimeEspecialTributacao}</RegimeEspecialTributacao>`);
+  }
+  
+  // OptanteSimplesNacional (padrão 2 = Não)
+  const optanteSimplesNacional = safeGet(InfRps, 'OptanteSimplesNacional') || '2';
+  xmlParts.push(`<OptanteSimplesNacional>${optanteSimplesNacional}</OptanteSimplesNacional>`);
+  
+  // IncentivadorCultural (padrão 2 = Não)
+  const incentivadorCultural = safeGet(InfRps, 'IncentivadorCultural') || '2';
+  xmlParts.push(`<IncentivadorCultural>${incentivadorCultural}</IncentivadorCultural>`);
+  
+  // Status (padrão 1 = Normal)
+  const status = safeGet(InfRps, 'Status') || '1';
+  xmlParts.push(`<Status>${status}</Status>`);
+  
+  // Servico
+  xmlParts.push('<Servico>');
+  xmlParts.push('<Valores>');
+  
+  // Valores obrigatórios
+  const valorServicos = safeGet(InfRps, 'Servico.Valores.ValorServicos') || '0';
+  xmlParts.push(`<ValorServicos>${valorServicos}</ValorServicos>`);
+  
+  // Valores opcionais
+  const valorDeducoes = safeGet(InfRps, 'Servico.Valores.ValorDeducoes');
+  if (shouldIncludeField(valorDeducoes)) {
+    xmlParts.push(`<ValorDeducoes>${valorDeducoes}</ValorDeducoes>`);
+  }
+  
+  const valorPis = safeGet(InfRps, 'Servico.Valores.ValorPis');
+  if (shouldIncludeField(valorPis)) {
+    xmlParts.push(`<ValorPis>${valorPis}</ValorPis>`);
+  }
+  
+  const valorCofins = safeGet(InfRps, 'Servico.Valores.ValorCofins');
+  if (shouldIncludeField(valorCofins)) {
+    xmlParts.push(`<ValorCofins>${valorCofins}</ValorCofins>`);
+  }
+  
+  const valorInss = safeGet(InfRps, 'Servico.Valores.ValorInss');
+  if (shouldIncludeField(valorInss)) {
+    xmlParts.push(`<ValorInss>${valorInss}</ValorInss>`);
+  }
+  
+  const valorIr = safeGet(InfRps, 'Servico.Valores.ValorIr');
+  if (shouldIncludeField(valorIr)) {
+    xmlParts.push(`<ValorIr>${valorIr}</ValorIr>`);
+  }
+  
+  const valorCsll = safeGet(InfRps, 'Servico.Valores.ValorCsll');
+  if (shouldIncludeField(valorCsll)) {
+    xmlParts.push(`<ValorCsll>${valorCsll}</ValorCsll>`);
+  }
+  
+  // IssRetido (padrão 2 = Não)
+  const issRetido = safeGet(InfRps, 'Servico.Valores.IssRetido') || '2';
+  xmlParts.push(`<IssRetido>${issRetido}</IssRetido>`);
+  
+  // Outros valores opcionais
+  const valorIss = safeGet(InfRps, 'Servico.Valores.ValorIss');
+  if (shouldIncludeField(valorIss)) {
+    xmlParts.push(`<ValorIss>${valorIss}</ValorIss>`);
+  } else if (shouldIncludeField(valorServicos)) {
+    // Calcular ValorIss se não fornecido mas ValorServicos estiver presente
+    const calculatedValorIss = (parseFloat(valorServicos) * 0.025).toFixed(2);
+    xmlParts.push(`<ValorIss>${calculatedValorIss}</ValorIss>`);
+  }
+  
+  const valorIssRetido = safeGet(InfRps, 'Servico.Valores.ValorIssRetido');
+  if (shouldIncludeField(valorIssRetido)) {
+    xmlParts.push(`<ValorIssRetido>${valorIssRetido}</ValorIssRetido>`);
+  }
+  
+  const outrasRetencoes = safeGet(InfRps, 'Servico.Valores.OutrasRetencoes');
+  if (shouldIncludeField(outrasRetencoes)) {
+    xmlParts.push(`<OutrasRetencoes>${outrasRetencoes}</OutrasRetencoes>`);
+  }
+  
+  const baseCalculo = safeGet(InfRps, 'Servico.Valores.BaseCalculo');
+  if (shouldIncludeField(baseCalculo)) {
+    xmlParts.push(`<BaseCalculo>${baseCalculo}</BaseCalculo>`);
+  } else if (shouldIncludeField(valorServicos)) {
+    // Usar ValorServicos como BaseCalculo se não fornecido
+    xmlParts.push(`<BaseCalculo>${valorServicos}</BaseCalculo>`);
+  }
+  
+  const aliquota = safeGet(InfRps, 'Servico.Valores.Aliquota') || '0.025';
+  xmlParts.push(`<Aliquota>${aliquota}</Aliquota>`);
+  
+  const valorLiquidoNfse = safeGet(InfRps, 'Servico.Valores.ValorLiquidoNfse');
+  if (shouldIncludeField(valorLiquidoNfse)) {
+    xmlParts.push(`<ValorLiquidoNfse>${valorLiquidoNfse}</ValorLiquidoNfse>`);
+  }
+  
+  const descontoIncondicionado = safeGet(InfRps, 'Servico.Valores.DescontoIncondicionado');
+  if (shouldIncludeField(descontoIncondicionado)) {
+    xmlParts.push(`<DescontoIncondicionado>${descontoIncondicionado}</DescontoIncondicionado>`);
+  }
+  
+  const descontoCondicionado = safeGet(InfRps, 'Servico.Valores.DescontoCondicionado');
+  if (shouldIncludeField(descontoCondicionado)) {
+    xmlParts.push(`<DescontoCondicionado>${descontoCondicionado}</DescontoCondicionado>`);
+  }
+  
+  xmlParts.push('</Valores>');
+  
+  // Campos obrigatórios do Serviço
+  const itemListaServico = safeGet(InfRps, 'Servico.ItemListaServico');
+  xmlParts.push(`<ItemListaServico>${itemListaServico}</ItemListaServico>`);
+  
+  // Campos opcionais do Serviço
+  const codigoTributacaoMunicipio = safeGet(InfRps, 'Servico.CodigoTributacaoMunicipio');
+  if (shouldIncludeField(codigoTributacaoMunicipio)) {
+    xmlParts.push(`<CodigoTributacaoMunicipio>${codigoTributacaoMunicipio}</CodigoTributacaoMunicipio>`);
+  }
+  
+  const discriminacao = safeGet(InfRps, 'Servico.Discriminacao');
+  xmlParts.push(`<Discriminacao>${discriminacao}</Discriminacao>`);
+  
+  const codigoMunicipio = safeGet(InfRps, 'Servico.CodigoMunicipio');
+  xmlParts.push(`<CodigoMunicipio>${codigoMunicipio}</CodigoMunicipio>`);
+  
+  xmlParts.push('</Servico>');
+  
+  // Prestador
+  xmlParts.push('<Prestador>');
+  const prestadorCnpj = safeGet(InfRps, 'Prestador.Cnpj');
+  xmlParts.push(`<Cnpj>${prestadorCnpj}</Cnpj>`);
+  
+  const prestadorInscricaoMunicipal = safeGet(InfRps, 'Prestador.InscricaoMunicipal');
+  xmlParts.push(`<InscricaoMunicipal>${prestadorInscricaoMunicipal}</InscricaoMunicipal>`);
+  xmlParts.push('</Prestador>');
+  
+  // Tomador
+  xmlParts.push('<Tomador>');
+  
+  // IdentificacaoTomador
+  xmlParts.push('<IdentificacaoTomador>');
+  xmlParts.push('<CpfCnpj>');
+  
+  const tomadorCpf = safeGet(InfRps, 'Tomador.IdentificacaoTomador.CpfCnpj.Cpf');
+  const tomadorCnpj = safeGet(InfRps, 'Tomador.IdentificacaoTomador.CpfCnpj.Cnpj');
+  
+  if (shouldIncludeField(tomadorCpf)) {
+    xmlParts.push(`<Cpf>${tomadorCpf}</Cpf>`);
+  } else if (shouldIncludeField(tomadorCnpj)) {
+    xmlParts.push(`<Cnpj>${tomadorCnpj}</Cnpj>`);
+  }
+  
+  xmlParts.push('</CpfCnpj>');
+  
+  // InscricaoMunicipal do Tomador (opcional)
+  const tomadorInscricaoMunicipal = safeGet(InfRps, 'Tomador.IdentificacaoTomador.InscricaoMunicipal');
+  if (shouldIncludeField(tomadorInscricaoMunicipal)) {
+    xmlParts.push(`<InscricaoMunicipal>${tomadorInscricaoMunicipal}</InscricaoMunicipal>`);
+  }
+  
+  xmlParts.push('</IdentificacaoTomador>');
+  
+  // RazaoSocial do Tomador
+  const tomadorRazaoSocial = safeGet(InfRps, 'Tomador.RazaoSocial');
+  xmlParts.push(`<RazaoSocial>${tomadorRazaoSocial}</RazaoSocial>`);
+  
+  // Endereco do Tomador
+  xmlParts.push('<Endereco>');
+  
+  // Campos do Endereco
+  const enderecoLogradouro = safeGet(InfRps, 'Tomador.Endereco.Logradouro') || safeGet(InfRps, 'Tomador.Endereco.Endereco');
+  if (shouldIncludeField(enderecoLogradouro)) {
+    xmlParts.push(`<Endereco>${enderecoLogradouro}</Endereco>`);
+  }
+  
+  const enderecoNumero = safeGet(InfRps, 'Tomador.Endereco.Numero');
+  if (shouldIncludeField(enderecoNumero)) {
+    xmlParts.push(`<Numero>${enderecoNumero}</Numero>`);
+  }
+  
+  const enderecoComplemento = safeGet(InfRps, 'Tomador.Endereco.Complemento');
+  if (shouldIncludeField(enderecoComplemento)) {
+    xmlParts.push(`<Complemento>${enderecoComplemento}</Complemento>`);
+  }
+  
+  const enderecoBairro = safeGet(InfRps, 'Tomador.Endereco.Bairro');
+  if (shouldIncludeField(enderecoBairro)) {
+    xmlParts.push(`<Bairro>${enderecoBairro}</Bairro>`);
+  }
+  
+  const enderecoCodigoMunicipio = safeGet(InfRps, 'Tomador.Endereco.CodigoMunicipio');
+  if (shouldIncludeField(enderecoCodigoMunicipio)) {
+    xmlParts.push(`<CodigoMunicipio>${enderecoCodigoMunicipio}</CodigoMunicipio>`);
+  }
+  
+  const enderecoUf = safeGet(InfRps, 'Tomador.Endereco.Uf');
+  if (shouldIncludeField(enderecoUf)) {
+    xmlParts.push(`<Uf>${enderecoUf}</Uf>`);
+  }
+  
+  const enderecoCep = safeGet(InfRps, 'Tomador.Endereco.Cep');
+  if (shouldIncludeField(enderecoCep)) {
+    xmlParts.push(`<Cep>${enderecoCep}</Cep>`);
+  }
+  
+  xmlParts.push('</Endereco>');
+  
+  // Contato do Tomador (opcional)
+  const tomadorTelefone = safeGet(InfRps, 'Tomador.Contato.Telefone');
+  const tomadorEmail = safeGet(InfRps, 'Tomador.Contato.Email');
+  
+  if (shouldIncludeField(tomadorTelefone) || shouldIncludeField(tomadorEmail)) {
+    xmlParts.push('<Contato>');
+    
+    if (shouldIncludeField(tomadorTelefone)) {
+      xmlParts.push(`<Telefone>${formatarTelefone(tomadorTelefone)}</Telefone>`);
+    }
+    
+    if (shouldIncludeField(tomadorEmail)) {
+      xmlParts.push(`<Email>${tomadorEmail}</Email>`);
+    }
+    
+    xmlParts.push('</Contato>');
+  }
+  
+  // Fechar as tags
+  xmlParts.push('</Tomador>');
+  xmlParts.push('</InfRps>');
+  xmlParts.push('</Rps>');
+  xmlParts.push('</ListaRps>');
+  xmlParts.push('</LoteRps>');
+  xmlParts.push('</EnviarLoteRpsEnvio>');
+  
+  // Juntar todas as partes do XML
+  const completeXml = xmlParts.join('\n');
 
   // Agora, envolver o XML em um envelope SOAP
   // Primeiro, vamos assinar o XML completo (sem envelope SOAP)

@@ -2,16 +2,26 @@ import * as fs from "fs";
 import * as path from "path";
 import axios from "axios";
 import https from "https";
-import nfseConfig from "../../nfse.config.js";
 import { buildConsultarSituacaoLoteRpsXml } from "../../utils/xmlBuilderMetodo2";
 import { writeLog } from "./logs";
 import { nfseDataTemplateMetodo2 } from "../../utils/nfseDataTemplateMetodo2";
 import { createSoapEnvelopeMetodo2 } from "../../utils/soapBuilderMetodos";
+import { validateXsdGlobal } from "../../utils/validateXsdGlobal";
 
-// Parâmetros do arquivo de configuração
+// Parâmetros de configuração das variáveis de ambiente
 const BHISS_URLS = {
-  1: process.env.API_URL_PRDUCTION, // Produção
+  1: process.env.API_URL_PRODUCTION, // Produção
   2: process.env.API_URL // Homologação
+};
+
+// Headers SOAP
+const SOAP_HEADERS = {
+  'Content-Type': process.env.CONTENT_TYPE || 'text/xml;charset=UTF-8',
+  'SOAPAction': process.env.SOAP_ACTION + 'ConsultarSituacaoLoteRps',
+  'Accept': process.env.ACCEPT || 'text/xml, application/xml',
+  'User-Agent': process.env.USER_AGENT || 'Apache-HttpClient/4.5.5 (Java/1.8.0_144)',
+  'Connection': 'close',
+  'Cache-Control': 'no-cache'
 };
 
 export default async function handler(req, res) {
@@ -22,17 +32,6 @@ export default async function handler(req, res) {
     writeLog(message);
     logs.push(message);
   };
-
-  // 1. Validar e preparar o diretório para os XMLs
-  const notasFiscaisDir = path.resolve("notas-fiscais");
-  if (!fs.existsSync(notasFiscaisDir)) {
-    fs.mkdirSync(notasFiscaisDir, { recursive: true });
-  }
-
-  const consultasDir = path.resolve("notas-fiscais", "consultas");
-  if (!fs.existsSync(consultasDir)) {
-    fs.mkdirSync(consultasDir, { recursive: true });
-  }
 
   // Preparar os dados para a consulta
   const consultaData = {
@@ -52,6 +51,27 @@ export default async function handler(req, res) {
   await fs.promises.writeFile(saveXML, xml, 'utf8');
   addLog("   ✓ XML gerado com sucesso");
 
+  // Validação do XML contra o schema XSD
+  addLog("Validando XML contra o schema XSD...");
+  const validationResult = await validateXsdGlobal({
+    xmlContent: xml,
+    addLog,
+    xsdSchemaPath: process.env.XSD_SCHEMA_PATH
+  });
+
+  if (!validationResult.success) {
+    addLog("Erro de validação do XML:");
+    addLog(`Detalhes do erro: ${JSON.stringify(validationResult.detalhes, null, 2)}`);
+    return res.status(400).json({
+      success: false,
+      message: "Erro na validação do XML",
+      logs,
+      error: "Erro na validação do XML",
+      details: validationResult.detalhes,
+    });
+  }
+  addLog("   ✓ XML validado com sucesso");
+
   // Criar envelope SOAP
   addLog("Envelopando XML...");
   const soapEnvelope = createSoapEnvelopeMetodo2(xml);
@@ -70,26 +90,20 @@ export default async function handler(req, res) {
     rejectUnauthorized: true,
     keepAlive: false,
     timeout: 180000,
-    cert: fs.existsSync(nfseConfig.certificado.cert)
-      ? fs.readFileSync(nfseConfig.certificado.cert)
+    cert: fs.existsSync(process.env.CERT_CRT_PATH)
+      ? fs.readFileSync(process.env.CERT_CRT_PATH)
       : undefined,
-    key: fs.existsSync(nfseConfig.certificado.key)
-      ? fs.readFileSync(nfseConfig.certificado.key)
-      : undefined,
-    ca: fs.existsSync(nfseConfig.certificado.ca)
-      ? fs.readFileSync(nfseConfig.certificado.ca)
-      : undefined,
+    key: fs.existsSync(process.env.CERT_KEY_PATH)
+      ? fs.readFileSync(process.env.CERT_KEY_PATH)
+      : undefined
   });
 
   // Chamada HTTP direta para a Prefeitura
   const axiosConfig = {
     method: "post",
-    url: "https://bhisshomologaws.pbh.gov.br/bhiss-ws/nfse",
+    url: requestUrl,
     data: soapEnvelope,
-    headers: {
-      "Content-Type": "text/xml;charset=UTF-8",
-      SOAPAction: nfseConfig.headers.SOAPAction + "ConsultarSituacaoLoteRps",
-    },
+    headers: SOAP_HEADERS,
     httpsAgent: agent,
     maxRedirects: 0,
     timeout: 180000,

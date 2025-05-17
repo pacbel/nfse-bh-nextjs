@@ -2,12 +2,12 @@
 
 export const nfseDataTemplateMetodo3 = {
   IdentificacaoRps: {
-    Numero: '15',
-    Serie: 'HOMOL',
+    Numero: '22',
+    Serie: 'TESTE',
     Tipo: '1'
   },
   Prestador: {
-    Cnpj: '05065736000161',
-    InscricaoMunicipal: '01733890014'
+    Cnpj: '23456789000123',
+    InscricaoMunicipal: '12345678901'
   }
 };
