@@ -169,48 +169,23 @@ export default async function handler(req, res) {
 
     addLog(`Enviando para o serviço: ${apiUrl}`);
 
-    // Configurar o agente HTTPS com as opções TLS
-    const agent = new https.Agent({
-      minVersion: 'TLSv1',
-      maxVersion: 'TLSv1.2',
-      ciphers: 'HIGH:!aNULL:!MD5',
-      rejectUnauthorized: false // Para ambiente de homologação apenas
-    });
-
     // Enviar a requisição SOAP
     try {
-      addLog(`Enviando requisição para: ${apiUrl}`);
-      addLog(`Headers: ${JSON.stringify(SOAP_HEADERS)}`);
-      addLog(`Tamanho do envelope SOAP: ${soapEnvelope.length} caracteres`);
 
-      // Verificar a URL do serviço
-      addLog(`[DEBUG] URL do serviço (ambiente ${ambiente}): ${apiUrl}`);
-      if (!apiUrl) {
-        addLog(`[ERRO] URL do serviço não definida para o ambiente ${ambiente}`);
-      } else {
-        addLog(`[INFO] URL do serviço válida: ${apiUrl.substring(0, 8)}...`);
-      }
+      // Ler o certificado .pfx que você já está usando
+      const certificadoBuffer = fs.readFileSync(certificadoPath);
 
-      // Verificar o conteúdo do envelope SOAP
-      addLog(`[DEBUG] Primeiros 100 caracteres do envelope SOAP:`);
-      addLog(soapEnvelope.substring(0, 100) + '...');
-      addLog(`[DEBUG] Últimos 100 caracteres do envelope SOAP:`);
-      addLog('...' + soapEnvelope.substring(soapEnvelope.length - 100));
-
-      // Salvar o envelope SOAP para debug
-      const soapDir = path.join(process.cwd(), 'logs', 'soap');
-      if (!fs.existsSync(soapDir)) {
-        fs.mkdirSync(soapDir, { recursive: true });
-      }
-      const soapFile = path.join(soapDir, `soap_envelope_${timestamp}.xml`);
-      await fs.promises.writeFile(soapFile, soapEnvelope, 'utf8');
-
+      const cert = fs.readFileSync('./certs/05065736000161/certificate.crt', 'utf8');
+      const key = fs.readFileSync('./certs/05065736000161/certificate.key', 'utf8');
+      
       const agent = new https.Agent({
-        rejectUnauthorized: true,
-        keepAlive: false,
-        timeout: 180000
+        cert: cert,
+        key: key,
+        rejectUnauthorized: false
       });
 
+      addLog(soapEnvelope);
+      
       // Chamada HTTP direta para a Prefeitura
       const axiosConfig = {
         method: "post",
@@ -218,7 +193,7 @@ export default async function handler(req, res) {
         data: soapEnvelope,
         headers: {
           'Content-Type': 'text/xml;charset=UTF-8',
-          'SOAPAction': 'http://ws.bhiss.pbh.gov.br/',
+          'SOAPAction': '"http://ws.bhiss.pbh.gov.br/RecepcionarLoteRps"',
           'Accept': 'text/xml, application/xml',
           'User-Agent': 'Apache-HttpClient/4.5.5 (Java/1.8.0_144)',
           'Connection': 'close',
