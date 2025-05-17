@@ -76,3 +76,4 @@ documentacao/XML_Mensagens/Mensagens XML/6. Cancelamento de NFS-e/Resposta/servi
 certs/*
 
 documentacao/jsons_pacbel/*
+.env.local
