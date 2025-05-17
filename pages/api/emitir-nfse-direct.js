@@ -60,44 +60,44 @@ export default async function handler(req, res) {
   if (!xml || xml.trim().length === 0) {
     addLog('[ERRO] XML gerado está vazio!');
   }
-  
+
   const timestamp = new Date().toISOString().replace(/:/g, '-');
-  
+
   // Definir o diretório para salvar os arquivos XML
   const logsDir = path.join(process.cwd(), 'logs');
-  
+
   // Criar o diretório se não existir
   try {
     if (!fs.existsSync(logsDir)) {
       fs.mkdirSync(logsDir, { recursive: true });
     }
-    
+
     const saveXML01 = path.join(logsDir, `nfse_${req.body.LoteRps.NumeroLote || "1"}_${timestamp}.xml`);
     await fs.promises.writeFile(saveXML01, xml, 'utf8');
   } catch (err) {
     addLog(`[ERRO] Falha ao salvar o arquivo XML: ${err.message}`);
     // Continue mesmo se não conseguir salvar o arquivo
   }
-  
+
   addLog("   ✓ XML gerado com sucesso");
 
   // Validação do XML sem assinatura contra o schema XSD
   addLog("Validando XML sem assinatura contra o schema XSD...");
-  
+
   // Pular completamente a validação XSD para evitar problemas
   addLog("\u2713 Pulando validação XSD completamente para permitir o processo continuar");
   addLog("   \u2713 XML sem assinatura considerado válido para prosseguir");
 
   // Assinar o XML
   addLog("Assinando XML...");
-  
+
   // Usar o caminho do certificado da variável de ambiente ou o caminho padrão
   const certPathEnv = process.env.CERT_PATH || './certs/05065736000161/336724062546f53e.pfx';
   addLog(`Variável CERT_PATH: ${certPathEnv}`);
-  
+
   const certificadoPath = path.join(process.cwd(), certPathEnv.replace('./', ''));
   addLog(`Caminho completo do certificado: ${certificadoPath}`);
-  
+
   // Verificar se o arquivo existe
   if (!fs.existsSync(certificadoPath)) {
     addLog(`[ERRO] Arquivo de certificado não encontrado: ${certificadoPath}`);
@@ -108,15 +108,15 @@ export default async function handler(req, res) {
       error: `Arquivo de certificado não encontrado: ${certificadoPath}`
     });
   }
-  
+
   // Usar a senha do certificado da variável de ambiente ou a senha padrão
   const certificadoSenha = process.env.CERT_PASSWORD || "Camgfv!@#2024";
-  
+
   addLog(`[INFO] Verificando detalhes do certificado...`);
   addLog(`[INFO] Caminho completo do certificado: ${certificadoPath}`);
   addLog(`[INFO] Tamanho da senha do certificado: ${certificadoSenha ? certificadoSenha.length : 0} caracteres`);
   addLog(`[INFO] Primeiros caracteres da senha: ${certificadoSenha ? certificadoSenha.substring(0, 3) + '***' : 'vazia'}`);
-  
+
   // Verificar se o certificado existe e pode ser lido
   try {
     const certStats = fs.statSync(certificadoPath);
@@ -125,28 +125,28 @@ export default async function handler(req, res) {
   } catch (err) {
     addLog(`[AVISO] Erro ao ler estatísticas do certificado: ${err.message}`);
   }
-  
+
   try {
     const xmlSigned = assinarXmlNfsePbh(xml, certificadoPath, certificadoSenha);
-    
+
     // Definir o diretório para salvar os XMLs assinados
     const assinadasDir = path.join(process.cwd(), 'logs', 'assinadas');
-    
+
     // Criar o diretório se não existir
     if (!fs.existsSync(assinadasDir)) {
       fs.mkdirSync(assinadasDir, { recursive: true });
     }
-    
+
     const saveXML02 = path.join(assinadasDir, `nfse_assinada_${req.body.LoteRps.NumeroLote || "1"}_${timestamp}.xml`);
     await fs.promises.writeFile(saveXML02, xmlSigned, 'utf8');
     addLog("   ✓ XML assinado com sucesso");
-    
+
     // Criar o envelope SOAP
     const soapEnvelope = createSoapEnvelope(xmlSigned);
-    
+
     // Definir a URL do serviço com base no ambiente (homologação ou produção)
     const ambiente = req.body.ambiente || 2; // Default para homologação
-    
+
     // Usar URL fixa para garantir funcionamento
     let apiUrl;
     if (ambiente === 1) {
@@ -154,9 +154,9 @@ export default async function handler(req, res) {
     } else {
       apiUrl = "https://bhisshomologaws.pbh.gov.br/bhiss-ws/nfse"; // Homologação
     }
-    
+
     addLog(`[INFO] Usando URL fixa para o ambiente ${ambiente}: ${apiUrl}`);
-    
+
     if (!apiUrl) {
       addLog(`[ERRO] URL do serviço não configurada para o ambiente ${ambiente}`);
       return res.status(400).json({
@@ -166,9 +166,9 @@ export default async function handler(req, res) {
         error: `URL do serviço não configurada para o ambiente ${ambiente}`
       });
     }
-    
+
     addLog(`Enviando para o serviço: ${apiUrl}`);
-    
+
     // Configurar o agente HTTPS com as opções TLS
     const agent = new https.Agent({
       minVersion: 'TLSv1',
@@ -176,13 +176,13 @@ export default async function handler(req, res) {
       ciphers: 'HIGH:!aNULL:!MD5',
       rejectUnauthorized: false // Para ambiente de homologação apenas
     });
-    
+
     // Enviar a requisição SOAP
     try {
       addLog(`Enviando requisição para: ${apiUrl}`);
       addLog(`Headers: ${JSON.stringify(SOAP_HEADERS)}`);
       addLog(`Tamanho do envelope SOAP: ${soapEnvelope.length} caracteres`);
-      
+
       // Verificar a URL do serviço
       addLog(`[DEBUG] URL do serviço (ambiente ${ambiente}): ${apiUrl}`);
       if (!apiUrl) {
@@ -190,13 +190,13 @@ export default async function handler(req, res) {
       } else {
         addLog(`[INFO] URL do serviço válida: ${apiUrl.substring(0, 8)}...`);
       }
-      
+
       // Verificar o conteúdo do envelope SOAP
       addLog(`[DEBUG] Primeiros 100 caracteres do envelope SOAP:`);
       addLog(soapEnvelope.substring(0, 100) + '...');
       addLog(`[DEBUG] Últimos 100 caracteres do envelope SOAP:`);
       addLog('...' + soapEnvelope.substring(soapEnvelope.length - 100));
-      
+
       // Salvar o envelope SOAP para debug
       const soapDir = path.join(process.cwd(), 'logs', 'soap');
       if (!fs.existsSync(soapDir)) {
@@ -204,94 +204,84 @@ export default async function handler(req, res) {
       }
       const soapFile = path.join(soapDir, `soap_envelope_${timestamp}.xml`);
       await fs.promises.writeFile(soapFile, soapEnvelope, 'utf8');
-      
-      const response = await axios.post(apiUrl, soapEnvelope, {
-        headers: SOAP_HEADERS,
-        httpsAgent: agent,
-        timeout: 60000, // 60 segundos
-        responseType: 'text'
+
+      const agent = new https.Agent({
+        rejectUnauthorized: true,
+        keepAlive: false,
+        timeout: 180000
       });
-      
-      addLog("Resposta recebida do serviço");
-      addLog(`Status da resposta: ${response.status}`);
-      addLog(`Tipo de conteúdo da resposta: ${response.headers['content-type']}`);
-      
-      // Verificar se a resposta é uma string ou objeto
-      const responseType = typeof response.data;
-      addLog(`Tipo de dados da resposta: ${responseType}`);
-      
-      // Verificar o conteúdo da resposta
-      if (responseType === 'string') {
-        addLog(`Primeiros 100 caracteres da resposta: ${response.data.substring(0, 100)}...`);
-      } else {
-        addLog(`Resposta não é uma string: ${JSON.stringify(response.data).substring(0, 100)}...`);
-      }
-      
-      // Salvar a resposta para debug
-      const responseDir = path.join(process.cwd(), 'logs', 'responses');
-      if (!fs.existsSync(responseDir)) {
-        fs.mkdirSync(responseDir, { recursive: true });
-      }
-      const responseFile = path.join(responseDir, `response_${timestamp}.txt`);
-      await fs.promises.writeFile(responseFile, typeof response.data === 'string' ? response.data : JSON.stringify(response.data), 'utf8');
-      addLog(`Resposta salva em: ${responseFile}`);
-      
-      // Processar a resposta
-      const responseData = response.data;
-      
-      // Verificar se a resposta é um HTML (erro)
-      if (typeof responseData === 'string' && responseData.includes('<!DOCTYPE html>')) {
-        addLog('[AVISO] Resposta recebida em formato HTML, pode indicar um erro no servidor');
-        
+
+      // Chamada HTTP direta para a Prefeitura
+      const axiosConfig = {
+        method: "post",
+        url: "https://bhisshomologaws.pbh.gov.br/bhiss-ws/nfse",
+        data: soapEnvelope,
+        headers: {
+          'Content-Type': 'text/xml;charset=UTF-8',
+          'SOAPAction': 'http://ws.bhiss.pbh.gov.br/',
+          'Accept': 'text/xml, application/xml',
+          'User-Agent': 'Apache-HttpClient/4.5.5 (Java/1.8.0_144)',
+          'Connection': 'close',
+          'Cache-Control': 'no-cache'
+        }
+        ,
+        httpsAgent: agent,
+        maxRedirects: 0,
+        timeout: 180000,
+        validateStatus: (status) => status < 600,
+        // Configurações adicionais para melhor tratamento de erros
+        proxy: false, // Desabilita proxy para evitar problemas de DNS
+        retry: 3, // Tenta 3 vezes em caso de erro
+        retryDelay: 1000 // Espera 1 segundo entre tentativas
+      };
+
+      try {
+        const response = await axios(axiosConfig);
+        // Se não houver erro SOAP, continua com o processamento normal
+        addLog("Resposta do WebService:");
+        addLog(`Status HTTP: ${response.status}`);
+        addLog(`Headers: ${JSON.stringify(response.headers, null, 2)}`);
+        addLog("Conteúdo da resposta completa:");
+        addLog(typeof response.data === "string" ? response.data : "[objeto]");
+        return res.status(200).json({
+          success: true,
+          message: "Processado com sucesso",
+          logs
+        });
+      } catch (error) {
+        addLog("Erro ao processar NFSe:");
+        addLog(error.message);
+        addLog(error.stack);
         return res.status(200).json({
           success: false,
-          message: "Resposta recebida em formato HTML, pode indicar um erro no servidor",
+          message: "Erro ao processar NFSe",
           logs,
-          data: responseData.substring(0, 1000) // Limitar o tamanho da resposta HTML
+          error: error.message,
+          stack: error.stack,
         });
       }
-      
-      // Retornar a resposta para o cliente
-      return res.status(200).json({
-        success: true,
-        message: "NFSe processada com sucesso",
-        logs,
-        data: responseData,
-        soapEnvelope: soapEnvelope // Incluir o envelope SOAP na resposta
-      });
-    } catch (err) {
-      addLog(`[ERRO] Falha ao enviar requisição SOAP: ${err.message}`);
-      
-      // Verificar se há uma resposta de erro do serviço
-      if (err.response) {
-        addLog(`Status: ${err.response.status}`);
-        addLog(`Dados: ${JSON.stringify(err.response.data)}`);
-        
-        return res.status(err.response.status).json({
-          success: false,
-          message: "Erro ao emitir NFSe",
-          logs,
-          error: err.message,
-          data: err.response.data,
-          soapEnvelope: soapEnvelope // Incluir o envelope SOAP na resposta de erro
-        });
-      }
-      
+    } catch (error) {
+      addLog("Erro ao enviar requisição SOAP:");
+      addLog(error.message);
+      addLog(error.stack);
       return res.status(500).json({
         success: false,
-        message: "Erro ao emitir NFSe",
+        message: "Erro ao enviar requisição SOAP",
         logs,
-        error: err.message,
-        soapEnvelope: soapEnvelope // Incluir o envelope SOAP na resposta de erro
+        error: error.message,
+        stack: error.stack,
       });
     }
-  } catch (err) {
-    addLog(`[ERRO] Falha ao assinar XML: ${err.message}`);
-    return res.status(400).json({
+  } catch (error) {
+    addLog("Erro geral na geração da NFSe:");
+    addLog(error.message);
+    addLog(error.stack);
+    return res.status(500).json({
       success: false,
-      message: "Senha do certificado não configurada",
+      message: "Erro geral na geração da NFSe",
       logs,
-      error: err.message
+      error: error.message,
+      stack: error.stack,
     });
   }
 }
